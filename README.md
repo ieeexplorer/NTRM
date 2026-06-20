@@ -36,6 +36,13 @@ ntrm('MATPOWER case file name', [sample size])
 
 e.g.  results = ntrm('case39', 500)
 
+# Experimental cascade-ML surrogate
+
+The [`cascade_ml`](cascade_ml/) directory contains a tested Python DC
+power-flow surrogate, reproducible contingency generator, feature pipeline, and
+baseline machine-learning workflow. It is intended for preliminary research and
+validation against NTRM/AC-CFM, not as an AC-CFM replacement.
+
 # Acknowledgements
 The authors would like to thank Mathaios Panteli for valuable discussions
 and support. This work was supported by the Engineering and Physical
