@@ -43,6 +43,11 @@ power-flow surrogate, reproducible contingency generator, feature pipeline, and
 baseline machine-learning workflow. It is intended for preliminary research and
 validation against NTRM/AC-CFM, not as an AC-CFM replacement.
 
+The [`agent_control`](agent_control/) directory adds constrained flexible-load,
+battery, and generator agents with network-aware centralised and auction control
+experiments. Preventive intervention is reported separately from involuntary
+blackout loss.
+
 # Acknowledgements
 The authors would like to thank Mathaios Panteli for valuable discussions
 and support. This work was supported by the Engineering and Physical
