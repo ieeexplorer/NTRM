@@ -48,6 +48,11 @@ battery, and generator agents with network-aware centralised and auction control
 experiments. Preventive intervention is reported separately from involuntary
 blackout loss.
 
+The [`data_pipeline`](data_pipeline/) directory ingests reproducible public NESO
+demand snapshots, maps them to bounded synthetic IEEE test-case conditions, and
+screens conditional contingencies. It is explicitly a research demonstrator,
+not a representation of the live GB network or operational advice.
+
 # Acknowledgements
 The authors would like to thank Mathaios Panteli for valuable discussions
 and support. This work was supported by the Engineering and Physical
