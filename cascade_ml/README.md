@@ -62,6 +62,18 @@ median regression baseline, and random-forest regressor. Results belong in a CV
 or proposal only after the dataset, split, threshold, and metrics have been
 reviewed and reproduced.
 
+## Expected outputs
+
+- `data/scenarios.csv`: one reproducible row per contingency;
+- `models/cascade_models.joblib`: fitted baseline and random-forest models;
+- `models/metrics.json`: classification and regression metrics for the recorded
+  grouped split;
+- JSON risk output from `predict_risk.py` for an explicitly supplied outage.
+
+Generated datasets and models are ignored because they are experiment outputs,
+not source code. Commands, seeds, thresholds, and package versions should be
+recorded whenever a result is reported.
+
 ## Validation boundary
 
 Before treating this surrogate as evidence about real cascading failures,
@@ -69,3 +81,9 @@ compare its branch flows and cascade outcomes with MATPOWER and a representative
 subset of NTRM/AC-CFM scenarios. Differences should be documented rather than
 hidden; DC power flow ignores reactive power, voltage collapse, and protection
 dynamics.
+
+The executable comparison protocol is documented in
+[`docs/acfm_validation.md`](docs/acfm_validation.md). Once scenario-level AC-CFM
+results are available, `scripts/validate_vs_acfm.py` calculates paired
+regression and severe-event classification errors without fabricating missing
+AC results.

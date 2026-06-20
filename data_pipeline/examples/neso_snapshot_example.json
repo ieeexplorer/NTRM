@@ -1,0 +1,31 @@
+{
+  "source": "NESO Data Portal",
+  "dataset": "Demand Data Update",
+  "resource_id": "177f6fa4-ae49-4182-81ea-0c6b35f26ca6",
+  "source_url": "https://api.neso.energy/dataset/7a12172a-939c-404c-b581-a6128b74f588/resource/177f6fa4-ae49-4182-81ea-0c6b35f26ca6/download/demanddataupdate.csv",
+  "dataset_modified_at": "2026-06-20T08:20:08.016911",
+  "retrieved_at": "2026-06-20T21:42:54.585704+00:00",
+  "observed_at": "2026-06-15T10:30:00+00:00",
+  "settlement_date": "2026-06-15",
+  "settlement_period": 24,
+  "actual_or_forecast": "A",
+  "national_demand_mw": 21945.0,
+  "transmission_demand_mw": 23090.0,
+  "embedded_wind_mw": 699.0,
+  "embedded_solar_mw": 10250.0,
+  "interconnector_flows_mw": {
+    "IFA_FLOW": 1501.0,
+    "IFA2_FLOW": 991.0,
+    "BRITNED_FLOW": 1051.0,
+    "MOYLE_FLOW": 0.0,
+    "EAST_WEST_FLOW": -134.0,
+    "NEMO_FLOW": 1012.0,
+    "NSL_FLOW": 1395.0,
+    "ELECLINK_FLOW": 997.0,
+    "VIKING_FLOW": 1426.0,
+    "GREENLINK_FLOW": -501.0
+  },
+  "quality_flags": [
+    "invalid_newer_records_skipped"
+  ]
+}

@@ -74,3 +74,19 @@ generator actions, intervention cost, cascade generations, activation status,
 and both gross and net avoided loss. Because this is a static snapshot model,
 it does not call MW quantities "unserved energy"; MWh claims require an explicit
 time trajectory.
+
+## Sensitivity and cost studies
+
+`scripts/run_sensitivity.py` compares the full synthetic portfolio against half
+battery capacity, no battery, and flexible-load-only configurations on identical
+contingencies:
+
+```powershell
+python scripts/run_sensitivity.py --scenario-limit 10
+```
+
+Install `.[analysis]` and add `--plot results/sensitivity.png` for paired
+histograms. Cost-of-unserved-energy analysis is disabled unless
+`--unserved-cost-per-mwh` is supplied. Any chosen value must be cited and varied;
+the repository does not present its configurable cost defaults as market or
+literature estimates.

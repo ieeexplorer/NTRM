@@ -30,11 +30,21 @@ def assess_snapshot(
     predictor: RiskPredictor | None = None,
     mapping_config: MappingConfig | None = None,
     include_control: bool = True,
+    control_risk_threshold: float = 0.5,
 ) -> AssessmentReport:
     mapping = map_snapshot_to_case(snapshot, base_case, mapping_config)
     screening = screen_contingencies(mapping.case, contingencies, predictor=predictor)
     intervention = None
-    if include_control and screening:
+    should_control = (
+        include_control
+        and bool(screening)
+        and (
+            predictor is None
+            or screening[0].conditional_probability is not None
+            and screening[0].conditional_probability >= control_risk_threshold
+        )
+    )
+    if should_control:
         intervention = run_scenario(
             mapping.case,
             screening[0].outage_branch_ids,

@@ -1,4 +1,52 @@
-# Network Theory Resilience Metric (NTRM)
+# Sussex PhD research extension
+
+> **Independent research prototype.** This fork explores methods aligned with
+> the theme *Artificial Intelligence and Agent-based Control for Improving
+> Energy Network Resilience to Threats*. It is not an official University of
+> Sussex, NESO, or electricity-operator tool.
+
+The extension connects three reproducible modules while preserving the original
+MATLAB NTRM implementation:
+
+| Module | Purpose |
+|---|---|
+| [`cascade_ml`](cascade_ml/) | DC cascade surrogate, scenario generation, graph features, ML baselines, and an executable AC-CFM comparison protocol. |
+| [`agent_control`](agent_control/) | Network-aware coordination of flexible load, batteries, and generators with paired control and sensitivity experiments. |
+| [`data_pipeline`](data_pipeline/) | Provenance-preserving NESO snapshots mapped to bounded synthetic IEEE test-case conditions for conditional screening. |
+
+The technical roadmap is documented in
+[`docs/research_roadmap.md`](docs/research_roadmap.md). Discussion with the NTRM
+maintainers is tracked in
+[`sskazakos/NTRM#1`](https://github.com/sskazakos/NTRM/issues/1).
+
+## Run the integrated demonstration
+
+After installing the development environment, the default command uses a
+committed NESO snapshot so the output is reproducible and works offline:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+python run_demo.py
+```
+
+Use `python run_demo.py --live` to fetch the latest valid actual NESO demand
+record. Add `--model PATH` only when a trained model appropriate to the mapped
+operating range is available. Without one, the demo does not invent a risk
+probability.
+
+## Evidence status
+
+- Unit and integration tests verify software behaviour on controlled cases.
+- Public NESO data parameterises a synthetic IEEE 39-bus scenario; it does not
+  reconstruct the GB network.
+- DC results have not yet been validated against paired AC-CFM runs.
+- Generated model metrics, intervention benefits, and cost assumptions are not
+  presented as research findings until their experiments are reproduced and
+  reviewed.
+
+# Original Network Theory Resilience Metric (NTRM)
 The Network Theory Resilience Metric (NTRM) samples cascade scenarios from 
 a MATPOWER case file, then runs the AC Cascading Failure Model (AC-CFM) code,
 for all the resulting cases. Then, a set of network science metrics for the
@@ -36,7 +84,7 @@ ntrm('MATPOWER case file name', [sample size])
 
 e.g.  results = ntrm('case39', 500)
 
-# Experimental cascade-ML surrogate
+# Extension modules
 
 The [`cascade_ml`](cascade_ml/) directory contains a tested Python DC
 power-flow surrogate, reproducible contingency generator, feature pipeline, and
