@@ -31,9 +31,15 @@ def assess_snapshot(
     mapping_config: MappingConfig | None = None,
     include_control: bool = True,
     control_risk_threshold: float = 0.5,
+    severe_threshold_fraction: float = 0.2,
 ) -> AssessmentReport:
     mapping = map_snapshot_to_case(snapshot, base_case, mapping_config)
-    screening = screen_contingencies(mapping.case, contingencies, predictor=predictor)
+    screening = screen_contingencies(
+        mapping.case,
+        contingencies,
+        predictor=predictor,
+        severe_threshold_fraction=severe_threshold_fraction,
+    )
     intervention = None
     should_control = (
         include_control

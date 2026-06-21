@@ -87,3 +87,9 @@ streamlit run dashboard/app.py
 The dashboard displays source freshness, mapping warnings, conditional
 contingency results, and simulated interventions. It deliberately labels every
 view as a synthetic research scenario and not operational advice.
+
+The sidebar defaults to the included reproducible snapshot and also supports an
+explicit live NESO refresh or uploaded snapshot JSON. Plain-language notes,
+ranked tables, consequence charts, intervention accounting, and a method tab are
+provided for readers who are unfamiliar with the code. Streamlit's **Deploy**
+button is not required for local use.
