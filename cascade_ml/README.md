@@ -40,6 +40,12 @@ For a quick N-1 run:
 python scripts/generate_dataset.py --max-order 1
 ```
 
+From the repository root, reproduce the first deterministic case39 N-1 dataset:
+
+```powershell
+python cascade_ml/scripts/generate_dataset.py --case case39 --max-order 1 --output cascade_ml/data/case39_n1.csv
+```
+
 For the default study (all N-1, all N-2, and 2,000 seeded N-3 cases):
 
 ```powershell
@@ -61,6 +67,15 @@ Training saves a dummy baseline, logistic classifier, random-forest classifier,
 median regression baseline, and random-forest regressor. Results belong in a CV
 or proposal only after the dataset, split, threshold, and metrics have been
 reviewed and reproduced.
+
+Print ranked DC-only model metrics with:
+
+```powershell
+python cascade_ml/scripts/print_metrics.py cascade_ml/models/metrics.json
+```
+
+Do not copy example metric values into the repository; regenerate them from the
+recorded command, seed, threshold, and package versions.
 
 ## Expected outputs
 
