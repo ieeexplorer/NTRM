@@ -155,7 +155,7 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
             for i = 1:(sample_size/fail_min)
                 scenario_count = scenario_count + 1;
                 rng("shuffle");%this ensures that the random seed is different every time - if the same random results are required consistently, then comment this out
-                initial_contingency{scenario_count,:} = randi(n_bus,[k 1]);
+                initial_contingency{scenario_count,:} = randi(n_branch,[k 1]);
                 waitbar((scenario_count-1)/sample_size,f,strcat('Working out scenario list: scenario...',string(scenario_count-1),'/',string(sample_size)));
             end
         end
