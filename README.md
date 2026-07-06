@@ -37,6 +37,20 @@ record. Add `--model PATH` only when a trained model appropriate to the mapped
 operating range is available. Without one, the demo does not invent a risk
 probability.
 
+## Reproduce DC-only training metrics
+
+The first reproducible model run should use the deterministic N-1 scenario set:
+
+```bash
+make generate-and-train
+```
+
+This writes `cascade_ml/data/scenarios.csv`,
+`cascade_ml/models/cascade_models.joblib`, and `cascade_ml/models/metrics.json`.
+Those files are ignored by Git; report the command, seed, threshold, and package
+versions alongside any metrics. These are DC-surrogate metrics only, not
+validated AC-CFM research findings.
+
 ## Evidence status
 
 - Unit and integration tests verify software behaviour on controlled cases.

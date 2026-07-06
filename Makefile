@@ -1,6 +1,6 @@
 PYTHON ?= python3
 
-.PHONY: setup test demo demo-live sensitivity lint format typecheck clean
+.PHONY: setup test demo demo-live n1-dataset train-model generate-and-train sensitivity lint format typecheck clean
 
 setup:
 	$(PYTHON) -m pip install -r requirements-dev.txt
@@ -16,6 +16,14 @@ demo:
 
 demo-live:
 	$(PYTHON) run_demo.py --live
+
+n1-dataset:
+	cd cascade_ml && $(PYTHON) scripts/generate_dataset.py --max-order 1 --output data/scenarios.csv
+
+train-model:
+	cd cascade_ml && $(PYTHON) scripts/train_model.py --data data/scenarios.csv --output models/cascade_models.joblib --metrics models/metrics.json
+
+generate-and-train: n1-dataset train-model
 
 sensitivity:
 	$(PYTHON) agent_control/scripts/run_sensitivity.py --scenario-limit 10
