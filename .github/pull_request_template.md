@@ -2,6 +2,7 @@
 <!-- What changed and why -->
 
 ## Validation
+
 - [ ] Tests pass (`make test`)
 - [ ] Lint passes (`make lint`)
 - [ ] Typecheck passes (`make typecheck`)
