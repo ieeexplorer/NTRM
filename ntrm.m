@@ -1,4 +1,4 @@
-function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
+function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size, fail_min)
 %%  Network Theory Resilience Metric (NTRM)
 
 %   This code samples cascade scenarios from a MATPOWER case file, then
@@ -8,7 +8,7 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
 %   parameters are calculated:
 % 
 %       - Degree centrality of each node (bus)
-%       - Eigenvecor centrality of each node (bus)
+%       - Eigenvector centrality of each node (bus)
 %       - Betweenness centrality of each node (bus)
 %       - Closeness centrality of each node (bus)
 %       - Clustering coefficient of each node (bus)
@@ -84,13 +84,16 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     %source_file = 'case39.m'; % specify the desired MATPOWER case
     % Define the minimum number of initial failures. This is used in the
     % scenario generation, to define the complete set of scenarios that
-    % will be generated.
-    fail_min = 3;
+    % will be generated. Default: 3.
+    if nargin < 3 || isempty(fail_min)
+        fail_min = 3;
+    end
 
 %% Removing existing content in TempTestCase.m then copying the desired MATPOWER case and pasting it back to TempTestCase
 
-    % This is to remove all content of a temporary .m file 
+    % This is to remove all content of a temporary .m file
     file_name = 'TempTestCase.m'; %specify the name of the temporary .m file
+    cleanupObj = onCleanup(@() delete(file_name)); % auto-delete on exit/error
     fileID = fopen(file_name,'w');
     fprintf(fileID,'');
     fclose(fileID);
@@ -270,9 +273,4 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     NetworkTheoryResilienceMetric.initial_contingency = initial_contingency;
     
  %% Tidy up
-    % This is to remove all content of a temporary .m file 
-    file_name = 'TempTestCase.m'; %specify the name of the temporary .m file
-    fileID = fopen(file_name,'w');
-    fprintf(fileID,'');
-    fclose(fileID);
-    
+    % TempTestCase.m is automatically deleted by the onCleanup object.
