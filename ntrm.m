@@ -245,8 +245,8 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     % - Degree of node(i) * Degree of node(j)
     EBC = edge_betweenness_bin(A);
     for i = 1:size(mpc.branch(:,1))
-        cen_de_2(i:size(mpc.branch(:,1)),1) = cen_de(mpc.branch(i,1),4) * cen_de(mpc.branch(i,2),4);
-        cen_de_2(i:size(mpc.branch(:,1)),2) = EBC(mpc.branch(i,1),mpc.branch(i,2));
+        cen_de_2(i,1) = cen_de(mpc.branch(i,1),4) * cen_de(mpc.branch(i,2),4);
+        cen_de_2(i,2) = EBC(mpc.branch(i,1),mpc.branch(i,2));
     end
     
 %% Return results
