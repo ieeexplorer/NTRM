@@ -15,8 +15,8 @@ env:
   PYTHONUNBUFFERED: "1"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
-# This research prototype currently supports Python 3.12 in CI. Expand the
-# version matrix later when collaborators need broader compatibility.
+# This research prototype currently supports Python 3.12 in CI.
+# TODO: expand to 3.11 once sklearn compatibility is validated.
 jobs:
   lint:
     name: Lint (ruff)

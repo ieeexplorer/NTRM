@@ -6,15 +6,15 @@ from datetime import datetime, timezone
 
 import pytest
 
-from cascade_ml.case_loader import load_pypower_case
+from agent_control.environment import ControlPolicy, run_scenario
 from cascade_ml.cascade import simulate_cascade
+from cascade_ml.case_loader import load_pypower_case
 from cascade_ml.dataset import build_dataset, generate_contingencies
 from cascade_ml.features import FEATURE_NAMES
-from data_pipeline.case_mapping import MappingConfig, map_snapshot_to_case
+from data_pipeline.case_mapping import MappingConfig
 from data_pipeline.risk_service import assess_snapshot
 from data_pipeline.screening import screen_contingencies
 from data_pipeline.snapshot import OperatingSnapshot
-from agent_control.environment import ControlPolicy, run_scenario
 
 
 @pytest.fixture

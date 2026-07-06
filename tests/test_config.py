@@ -1,14 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
 from ntrm_config import (
-    CascadeConfig,
-    ControllerConfig,
-    MappingConfigValues,
-    ModelConfig,
     NTRMConfig,
-    ResourceConfig,
     _deep_update,
     load_config,
 )
@@ -37,6 +31,7 @@ def test_load_config_with_custom_toml(tmp_path, monkeypatch) -> None:
         "seed = 42\n"
         "\n"
         "[controller]\n"
+        "risk_threshold = 0.7\n"
         "target_loading_ratio = 0.85\n"
         "budget = 5000.0\n"
     )
@@ -47,6 +42,7 @@ def test_load_config_with_custom_toml(tmp_path, monkeypatch) -> None:
     assert config.cascade.max_generations == 10
     assert config.model.n_estimators == 100
     assert config.model.seed == 42
+    assert config.controller.risk_threshold == pytest.approx(0.7)
     assert config.controller.target_loading_ratio == pytest.approx(0.85)
     assert config.controller.budget == pytest.approx(5000.0)
     # Unchanged fields keep defaults
@@ -70,6 +66,7 @@ def test_all_default_values_match_expected() -> None:
     assert config.model.seed == 39
 
     # ControllerConfig defaults
+    assert config.controller.risk_threshold == pytest.approx(0.5)
     assert config.controller.target_loading_ratio == pytest.approx(0.9)
     assert config.controller.action_step_mw == pytest.approx(10.0)
     assert config.controller.duration_hours == pytest.approx(0.25)

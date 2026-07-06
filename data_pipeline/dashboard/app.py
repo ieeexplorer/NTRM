@@ -71,9 +71,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.warning(
-    "Research prototype only: this is a synthetic IEEE test-system study, not a model "
-    "of the GB network and not operational advice.",
-    icon="⚠️",
+    "Research prototype dashboard - not validated against AC power flow. "
+    "Do not use for operational decisions."
 )
 
 

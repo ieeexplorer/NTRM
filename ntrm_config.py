@@ -9,10 +9,11 @@ Load with:
 from __future__ import annotations
 
 import logging
-import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+import tomllib
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class ModelConfig:
 class ControllerConfig:
     """Parameters for the network-aware controller."""
 
+    risk_threshold: float = 0.5
     target_loading_ratio: float = 0.9
     action_step_mw: float = 10.0
     duration_hours: float = 0.25
