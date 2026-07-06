@@ -16,6 +16,8 @@ if "cascade_ml" not in sys.modules:
     for module_directory in ("cascade_ml", "agent_control", "data_pipeline"):
         sys.path.insert(0, str(ROOT / module_directory))
 
+from ntrm_config import load_config  # noqa: E402
+
 from agent_control.predictor import ModelBundlePredictor  # noqa: E402
 from cascade_ml.case_loader import load_pypower_case  # noqa: E402
 from cascade_ml.dataset import generate_contingencies  # noqa: E402
@@ -27,6 +29,7 @@ LOGGER = logging.getLogger("ntrm-demo")
 
 
 def main() -> None:
+    config = load_config()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--snapshot",
@@ -39,7 +42,12 @@ def main() -> None:
     )
     parser.add_argument("--model", type=Path, help="Optional trained Phase 1 model bundle")
     parser.add_argument("--contingencies", type=int, default=5)
-    parser.add_argument("--risk-threshold", type=float, default=0.5)
+    parser.add_argument(
+        "--risk-threshold",
+        type=float,
+        default=config.controller.risk_threshold,
+        help="Probability threshold for risk-gated mitigation",
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(

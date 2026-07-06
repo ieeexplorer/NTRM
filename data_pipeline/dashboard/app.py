@@ -13,10 +13,14 @@ import streamlit as st
 # Resolve the example snapshot relative to this file.
 _ROOT = Path(__file__).resolve().parents[2]
 EXAMPLE_SNAPSHOT = _ROOT / "data_pipeline" / "examples" / "neso_snapshot_example.json"
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 for _module_directory in ("cascade_ml", "agent_control", "data_pipeline"):
     module_path = str(_ROOT / _module_directory)
     if module_path not in sys.path:
         sys.path.insert(0, module_path)
+
+from ntrm_config import load_config  # noqa: E402
 
 from agent_control.predictor import ModelBundlePredictor  # noqa: E402
 from cascade_ml.case_loader import load_pypower_case  # noqa: E402
@@ -30,6 +34,9 @@ from data_pipeline.dashboard_view import (  # noqa: E402
 )
 from data_pipeline.risk_service import assess_snapshot  # noqa: E402
 from data_pipeline.snapshot import OperatingSnapshot  # noqa: E402
+
+config = load_config()
+risk_threshold_default = min(max(float(config.controller.risk_threshold), 0.0), 1.0)
 
 st.set_page_config(
     page_title="NTRM Resilience Research Demo",
@@ -71,7 +78,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.warning(
-    "Research prototype dashboard - not validated against AC power flow. "
+    "Research prototype: the underlying DC power flow surrogate has NOT been "
+    "validated against AC continuation power flow (AC-CFM). Cascade predictions, "
+    "risk scores, and mitigation recommendations shown here may not reflect actual "
+    "power system behavior. "
     "Do not use for operational decisions."
 )
 
@@ -140,7 +150,12 @@ with st.sidebar.expander("Advanced assumptions"):
         disabled=not use_model,
     )
     risk_threshold = st.slider(
-        "Model threshold for mitigation", 0.05, 0.95, 0.50, 0.05, disabled=not use_model
+        "Model threshold for mitigation",
+        0.0,
+        1.0,
+        risk_threshold_default,
+        0.05,
+        disabled=not use_model,
     )
 
 st.sidebar.divider()
