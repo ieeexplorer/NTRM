@@ -13,3 +13,5 @@ cascade_ml/data/*.csv
 cascade_ml/data/*.pkl
 !data/case39_n1_5000_v1.json
 !cascade_ml/data/case39_n1_5000_v1.json
+!data/case39_multi_5000_v1.json
+!cascade_ml/data/case39_multi_5000_v1.json

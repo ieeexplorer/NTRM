@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     average_precision_score,
     brier_score_loss,
+    confusion_matrix,
     f1_score,
     mean_absolute_error,
     mean_squared_error,
@@ -34,6 +35,7 @@ NON_FEATURES = {
     "cascade_generations",
     "final_unserved_mw",
     "final_unserved_fraction",
+    "cascade_event",
     "severe_event",
     "terminated_by_limit",
 }
@@ -74,10 +76,15 @@ def train_models(
     all_cls_metrics: list[dict[str, dict[str, float | None]]] = []
     all_reg_metrics: list[dict[str, dict[str, float | None]]] = []
     all_importances: list[list[float]] = []
+    confusion_totals: dict[str, np.ndarray] = {}
+    fold_summaries: list[dict] = []
     last_classifiers: dict | None = None
     last_regressors: dict | None = None
 
-    for train_index, test_index in splitter.split(data, groups=groups):
+    for fold_number, (train_index, test_index) in enumerate(
+        splitter.split(data, groups=groups),
+        start=1,
+    ):
         x_train, x_test = (
             data.iloc[train_index][feature_names],
             data.iloc[test_index][feature_names],
@@ -127,6 +134,9 @@ def train_models(
             ),
         }
 
+        fold_cls_metrics: dict[str, dict[str, float | None]] = {}
+        fold_reg_metrics: dict[str, dict[str, float | None]] = {}
+
         for name, model in classifiers.items():
             model.fit(x_train, y_train_cls)
             probabilities = model.predict_proba(x_test)[:, 1]
@@ -140,6 +150,11 @@ def train_models(
                 "brier": float(brier_score_loss(y_test_cls, probabilities)),
             }
             all_cls_metrics.append({name: metrics})
+            fold_cls_metrics[name] = metrics
+            matrix = confusion_matrix(y_test_cls, predictions, labels=[0, 1])
+            confusion_totals[name] = (
+                confusion_totals.get(name, np.zeros((2, 2), dtype=int)) + matrix
+            )
 
         for name, model in regressors.items():
             model.fit(x_train, y_train_reg)
@@ -150,6 +165,7 @@ def train_models(
                 "r2": _safe_metric(r2_score, y_test_reg, predictions),
             }
             all_reg_metrics.append({name: metrics})
+            fold_reg_metrics[name] = metrics
 
         if feature_importance and "random_forest" in classifiers:
             rf = classifiers["random_forest"]
@@ -158,6 +174,15 @@ def train_models(
 
         last_classifiers = classifiers
         last_regressors = regressors
+        fold_summaries.append(
+            {
+                "fold": fold_number,
+                "train_rows": len(train_index),
+                "test_rows": len(test_index),
+                "classification": fold_cls_metrics,
+                "regression": fold_reg_metrics,
+            }
+        )
 
     # Average metrics across folds
     classification_metrics = _average_fold_metrics(all_cls_metrics, n_splits)
@@ -179,6 +204,10 @@ def train_models(
             "test_rows": len(test_index),
             "n_splits": n_splits,
             "classification_threshold": classification_threshold,
+            "confusion_matrices": {
+                name: matrix.astype(int).tolist() for name, matrix in confusion_totals.items()
+            },
+            "folds": fold_summaries,
         },
     }
     if avg_importances is not None:

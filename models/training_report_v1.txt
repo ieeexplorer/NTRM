@@ -1,0 +1,19 @@
+NTRM cascade-risk training report
+
+Research prototype: metrics are from the DC surrogate and are not AC-CFM validated.
+
+Case: case39
+Rows: 5,000
+Positive cascade-event rate: 87.64%
+Mean cascade generations: 2.279
+Mean final unserved load: 1763.98 MW
+
+Random-forest classifier CV metrics:
+- PR AUC: 1.0000
+- PR AUC std: 0.0000
+- Recall at threshold: 0.9995
+- Brier score: 0.0018
+- ROC AUC: 1.0000
+
+Target definition:
+1 if the DC cascade surrogate trips at least one additional branch after the initiating outage; mirrored to severe_event for model compatibility

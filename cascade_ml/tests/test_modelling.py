@@ -20,6 +20,7 @@ def _small_dataset(n: int = 60, seed: int = 0) -> pd.DataFrame:
     cols["scenario_id"] = list(range(n))
     cols["final_unserved_mw"] = unserved
     cols["final_unserved_fraction"] = unserved / 100.0
+    cols["cascade_event"] = severe
     cols["severe_event"] = severe
     cols["cascade_generations"] = severe * rng.randint(1, 5, n)
     cols["terminated_by_limit"] = 0
@@ -34,6 +35,7 @@ def test_train_models_with_small_synthetic_dataset() -> None:
     assert "classifiers" in result
     assert "regressors" in result
     assert "metrics" in result
+    assert "cascade_event" not in result["feature_names"]
     assert result["metrics"]["classification"]["dummy"]["brier"] >= 0.0
     assert result["metrics"]["regression"]["dummy"]["mae_mw"] >= 0.0
 
@@ -56,6 +58,8 @@ def test_train_models_with_n_splits_3_cross_validation() -> None:
     # With >1 split, std columns should be present
     dummy_cls = result["metrics"]["classification"]["dummy"]
     assert any(k.endswith("_std") for k in dummy_cls)
+    assert len(result["metrics"]["folds"]) == 3
+    assert result["metrics"]["confusion_matrices"]["random_forest"]
 
 
 def test_classification_threshold_parameter() -> None:
@@ -137,6 +141,7 @@ def test_value_error_when_only_one_class() -> None:
     cols["scenario_id"] = list(range(n))
     cols["final_unserved_mw"] = np.zeros(n)
     cols["final_unserved_fraction"] = np.zeros(n)
+    cols["cascade_event"] = 0
     cols["severe_event"] = 0
     cols["cascade_generations"] = 0
     cols["terminated_by_limit"] = 0

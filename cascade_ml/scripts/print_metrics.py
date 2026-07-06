@@ -49,6 +49,8 @@ def _load_metrics(path: Path) -> tuple[dict[str, Any], dict[str, float]]:
         return bundle["metrics"], bundle.get("feature_importances", {})
 
     payload = json.loads(path.read_text(encoding="utf-8"))
+    if "cv_results" in payload:
+        return payload["cv_results"], payload.get("feature_importances", {})
     if "metrics" in payload:
         return payload["metrics"], payload.get("feature_importances", {})
     return payload, payload.get("feature_importances", {})

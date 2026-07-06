@@ -17,9 +17,11 @@ does not claim the fidelity of an AC cascading-failure model.
 - grouped train/test splitting, transparent baselines and random-forest models;
 - classification and regression metrics without predetermined performance claims.
 
-The default `severe_event` definition is at least 20% of system load unserved.
-That is an experimental threshold, not a universal definition of a HILP event.
-Any study should report sensitivity to alternative thresholds.
+The canonical training script now uses `cascade_event`: a binary label that is 1
+when the DC surrogate trips at least one additional branch after the initiating
+outage. It is mirrored to `severe_event` only for compatibility with the current
+model-training API. Older threshold-based severe-event studies should report
+their threshold explicitly.
 
 ## Setup
 
@@ -58,15 +60,19 @@ cascade generations, unserved load, severe-event label, and termination flag.
 
 ## Train and score
 
+From the repository root, generate the canonical case39 multi-outage dataset and
+train the baseline models:
+
 ```powershell
-python scripts/train_model.py
-python scripts/predict_risk.py --outages 0 5
+python cascade_ml/scripts/train_model.py
+python cascade_ml/scripts/predict_risk.py --outages 0 5
 ```
 
 Training saves a dummy baseline, logistic classifier, random-forest classifier,
-median regression baseline, and random-forest regressor. Results belong in a CV
-or proposal only after the dataset, split, threshold, and metrics have been
-reviewed and reproduced.
+median regression baseline, and random-forest regressor. It also writes a metrics
+JSON and a short text report. Results belong in a CV or proposal only after the
+dataset, split, target definition, and metrics have been reviewed and
+reproduced.
 
 Print ranked DC-only model metrics with:
 
@@ -79,15 +85,17 @@ recorded command, seed, threshold, and package versions.
 
 ## Expected outputs
 
-- `data/scenarios.csv`: one reproducible row per contingency;
-- `models/cascade_models.joblib`: fitted baseline and random-forest models;
-- `models/metrics.json`: classification and regression metrics for the recorded
-  grouped split;
+- `data/case39_multi_5000_v1.json`: canonical reproducible multi-outage dataset;
+- `models/cascade_rf_v1.joblib`: fitted baseline and random-forest models;
+- `models/training_metrics_v1.json`: classification/regression metrics and
+  feature importances for the recorded grouped splits;
+- `models/training_report_v1.txt`: human-readable summary for PR descriptions;
 - JSON risk output from `predict_risk.py` for an explicitly supplied outage.
 
-Generated datasets and models are ignored because they are experiment outputs,
-not source code. Commands, seeds, thresholds, and package versions should be
-recorded whenever a result is reported.
+Generated model bundles are ignored because `joblib` uses pickle internally and
+should only be loaded from trusted local outputs. Ad-hoc datasets are ignored;
+the canonical JSON dataset is kept reviewable so metric claims can be
+reproduced.
 
 ## Validation boundary
 
