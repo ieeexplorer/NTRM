@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 from datetime import datetime, timedelta, timezone
 from io import StringIO
 from zoneinfo import ZoneInfo
@@ -13,6 +14,8 @@ from urllib3.util.retry import Retry
 
 from ..quality import assess_quality
 from ..snapshot import OperatingSnapshot, utc_now
+
+LOGGER = logging.getLogger(__name__)
 
 INTERCONNECTOR_FIELDS = (
     "IFA_FLOW",
@@ -60,11 +63,19 @@ class NesoDemandConnector:
         ]
         if not resources:
             raise ValueError("NESO package contains no CSV resource")
+        if len(resources) > 1:
+            LOGGER.warning(
+                "NESO package has %d CSV resources; selecting the first (%s)",
+                len(resources),
+                resources[0].get("name", resources[0]["id"]),
+            )
         resource = resources[0]
         csv_response = self.session.get(resource["url"], timeout=self.timeout_seconds)
         csv_response.raise_for_status()
         rows = list(csv.DictReader(StringIO(csv_response.text.lstrip("\ufeff"))))
-        actual_rows = [row for row in rows if row.get("FORECAST_ACTUAL_INDICATOR", "").upper() == "A"]
+        actual_rows = [
+            row for row in rows if row.get("FORECAST_ACTUAL_INDICATOR", "").upper() == "A"
+        ]
         if not actual_rows:
             raise ValueError("NESO dataset contains no actual demand records")
         valid_actual_rows = [row for row in actual_rows if _positive_demand(row)]
@@ -73,12 +84,14 @@ class NesoDemandConnector:
         row = max(valid_actual_rows, key=_settlement_key)
         retrieved = retrieved_at or utc_now()
         observed = _settlement_start_utc(row["SETTLEMENT_DATE"], int(row["SETTLEMENT_PERIOD"]))
-        flags = list(assess_quality(
-            retrieved_at=retrieved,
-            observed_at=observed,
-            actual_or_forecast=row["FORECAST_ACTUAL_INDICATOR"],
-            maximum_age_hours=self.maximum_age_hours,
-        ))
+        flags = list(
+            assess_quality(
+                retrieved_at=retrieved,
+                observed_at=observed,
+                actual_or_forecast=row["FORECAST_ACTUAL_INDICATOR"],
+                maximum_age_hours=self.maximum_age_hours,
+            )
+        )
         if _settlement_key(max(actual_rows, key=_settlement_key)) > _settlement_key(row):
             flags.append("invalid_newer_records_skipped")
         return OperatingSnapshot(

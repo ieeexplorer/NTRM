@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from test_snapshot import example_snapshot
+
 from cascade_ml.model import Branch, Generator, PowerCase
 from data_pipeline.case_mapping import MappingConfig
 from data_pipeline.risk_service import assess_snapshot
-from test_snapshot import example_snapshot
 
 
 class FixedPredictor:

@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Sequence
+from typing import cast
 
 from cascade_ml.cascade import simulate_cascade
 from cascade_ml.model import PowerCase
 
-from .controller import NetworkAwareController
+from .controller import NetworkAwareController, SelectionMode
 from .predictor import RiskPredictor
 from .resources import ResourceAgent
 from .state import OperatingState
@@ -73,7 +74,10 @@ def run_scenario(
     target_met: bool | None = None
     if activated:
         controller = controller or NetworkAwareController()
-        mode = "centralised" if policy == ControlPolicy.CENTRALISED else "auction"
+        mode = cast(
+            SelectionMode,
+            "centralised" if policy == ControlPolicy.CENTRALISED else "auction",
+        )
         control = controller.control(state, initial_outages, agents, selection_mode=mode)
         state = control.state
         target_met = control.target_met

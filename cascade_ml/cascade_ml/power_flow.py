@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from math import inf
 
 import networkx as nx
 import numpy as np
 
-from .model import Branch, PowerCase
+from .model import PowerCase
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,8 @@ def _allocate_generation(case: PowerCase, buses: set[int], target_mw: float) -> 
 
     # Floating-point cleanup ensures the nodal injection vector sums to zero.
     dispatch[-1] += target_mw - float(dispatch.sum())
+    # Guard against floating-point rounding pushing the last generator negative
+    dispatch[-1] = max(dispatch[-1], 0.0)
     by_bus: dict[int, float] = {}
     for generator, output in zip(generators, dispatch, strict=True):
         by_bus[generator.bus] = by_bus.get(generator.bus, 0.0) + float(output)
@@ -134,12 +139,20 @@ def solve_dc_power_flow(case: PowerCase, active_branch_ids: set[int]) -> PowerFl
         for branch_id in component_branch_ids:
             branch = branches_by_id[branch_id]
             flow_mw = (
-                (component_angles[position[branch.from_bus]] - component_angles[position[branch.to_bus]])
+                (
+                    component_angles[position[branch.from_bus]]
+                    - component_angles[position[branch.to_bus]]
+                )
                 / branch.x_pu
                 * case.base_mva
             )
             flows[branch_id] = float(flow_mw)
             limit = branch.rate_mva if branch.rate_mva > 0 else inf
+            if limit == inf:
+                LOGGER.debug(
+                    "Branch %d has rate_mva=0; treating as unlimited capacity",
+                    branch.branch_id,
+                )
             ratios[branch_id] = float(abs(flow_mw) / limit)
 
     return PowerFlowResult(

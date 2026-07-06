@@ -10,7 +10,8 @@ from .state import OperatingState
 
 
 class ResourceAgent(Protocol):
-    agent_id: str
+    @property
+    def agent_id(self) -> str: ...
 
     def propose(self, state: OperatingState, duration_hours: float) -> Bid | None: ...
 
@@ -56,7 +57,10 @@ class BatteryAgent:
         if not 0 <= self.state_of_charge <= 1:
             raise ValueError("state_of_charge must be between 0 and 1")
         energy_limited_power = (
-            self.energy_capacity_mwh * self.state_of_charge * self.discharge_efficiency / duration_hours
+            self.energy_capacity_mwh
+            * self.state_of_charge
+            * self.discharge_efficiency
+            / duration_hours
         )
         available = min(
             self.max_power_mw,
@@ -85,9 +89,7 @@ class GeneratorAgent:
     cost_per_mwh: float = 100.0
 
     def propose(self, state: OperatingState, duration_hours: float) -> Bid | None:
-        generators = {
-            generator.generator_id: generator for generator in state.base_case.generators
-        }
+        generators = {generator.generator_id: generator for generator in state.base_case.generators}
         if self.generator_id not in generators:
             raise ValueError(f"Unknown generator ID: {self.generator_id}")
         generator = generators[self.generator_id]

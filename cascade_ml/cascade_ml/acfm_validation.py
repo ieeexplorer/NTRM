@@ -44,7 +44,7 @@ def compare_results(
     false_positive = int((dc_label & ~ac_label).sum())
     false_negative = int((~dc_label & ac_label).sum())
     metrics = {
-        "matched_scenarios": int(len(paired)),
+        "matched_scenarios": len(paired),
         "dc_only_scenarios": int(len(dc) - len(paired)),
         "ac_only_scenarios": int(len(ac) - len(paired)),
         "mean_absolute_error_mw": float(paired["absolute_error_mw"].mean()),

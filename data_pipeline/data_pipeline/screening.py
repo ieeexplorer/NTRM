@@ -10,6 +10,10 @@ import pandas as pd
 from cascade_ml.cascade import simulate_cascade
 from cascade_ml.model import PowerCase
 
+# NOTE: RiskPredictor is also defined in agent_control.predictor.
+# Both are structurally identical Protocols.  Keep them in sync if
+# the signature changes, or consolidate into a shared interface package.
+
 
 class RiskPredictor(Protocol):
     def predict_probability(self, case: PowerCase, initial_outages: tuple[int, ...]) -> float: ...

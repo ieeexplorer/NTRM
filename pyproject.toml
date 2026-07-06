@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ntrm"
+version = "0.2.0"
+description = "Network Theory Resilience Metric — DC cascade surrogate, ML baselines, agent-based control, and public-data pipeline"
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.10"
+authors = [
+    { name = "NTRM Research Team", email = "s.kazakos@sussex.ac.uk" },
+]
+keywords = ["power-systems", "cascading-failure", "resilience", "dc-power-flow", "machine-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "ntrm-cascade-ml",
+    "ntrm-agent-control",
+    "ntrm-data-pipeline",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pytest>=8",
+    "pytest-cov>=5",
+    "pre-commit>=3.7",
+]
+dashboard = ["streamlit>=1.35"]
+analysis = ["matplotlib>=3.8"]
+all = ["ntrm[dev,dashboard,analysis]"]
+
+[tool.setuptools]
+packages = []  # root has no packages; sub-packages installed via requirements-dev.txt
+
+# ──────────────────────────────────────────────
+# Ruff (linting + formatting)
+# ──────────────────────────────────────────────
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["cascade_ml", "agent_control", "data_pipeline"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.lint.isort]
+known-first-party = ["cascade_ml", "agent_control", "data_pipeline"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ──────────────────────────────────────────────
+# MyPy (type checking)
+# ──────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "/tests/",
+]
+
+[[tool.mypy.overrides]]
+module = ["joblib.*"]
+ignore_missing_imports = true
+
+# ──────────────────────────────────────────────
+# Pytest
+# ──────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["cascade_ml/tests", "agent_control/tests", "data_pipeline/tests", "tests"]
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests",
+]
+
+# ──────────────────────────────────────────────
+# Coverage
+# ──────────────────────────────────────────────
+[tool.coverage.run]
+source = ["cascade_ml", "agent_control", "data_pipeline"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "@abstractmethod",
+]

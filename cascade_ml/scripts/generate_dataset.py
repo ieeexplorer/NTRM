@@ -37,7 +37,9 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     dataset.to_csv(args.output, index=False)
     print(f"Wrote {len(dataset):,} unique scenarios to {args.output}")
-    print(f"Severe events: {int(dataset['severe_event'].sum()):,} ({dataset['severe_event'].mean():.2%})")
+    print(
+        f"Severe events: {int(dataset['severe_event'].sum()):,} ({dataset['severe_event'].mean():.2%})"
+    )
 
 
 if __name__ == "__main__":

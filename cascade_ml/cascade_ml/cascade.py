@@ -82,4 +82,4 @@ def simulate_cascade(
         )
         active.difference_update(overloaded)
 
-    raise AssertionError("unreachable")
+    raise RuntimeError("Cascade simulation reached max_generations without stabilising")

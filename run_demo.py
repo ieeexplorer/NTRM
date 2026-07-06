@@ -8,16 +8,20 @@ import logging
 import sys
 from pathlib import Path
 
+# NOTE: This sys.path manipulation is only needed when running run_demo.py
+# directly as a script (not when the sub-packages are installed via pip).
+# Prefer: pip install -r requirements-dev.txt && python run_demo.py
 ROOT = Path(__file__).resolve().parent
-for module_directory in ("cascade_ml", "agent_control", "data_pipeline"):
-    sys.path.insert(0, str(ROOT / module_directory))
+if "cascade_ml" not in sys.modules:
+    for module_directory in ("cascade_ml", "agent_control", "data_pipeline"):
+        sys.path.insert(0, str(ROOT / module_directory))
 
-from agent_control.predictor import ModelBundlePredictor
-from cascade_ml.case_loader import load_pypower_case
-from cascade_ml.dataset import generate_contingencies
-from data_pipeline.connectors import NesoDemandConnector
-from data_pipeline.risk_service import assess_snapshot
-from data_pipeline.snapshot import OperatingSnapshot
+from agent_control.predictor import ModelBundlePredictor  # noqa: E402
+from cascade_ml.case_loader import load_pypower_case  # noqa: E402
+from cascade_ml.dataset import generate_contingencies  # noqa: E402
+from data_pipeline.connectors import NesoDemandConnector  # noqa: E402
+from data_pipeline.risk_service import assess_snapshot  # noqa: E402
+from data_pipeline.snapshot import OperatingSnapshot  # noqa: E402
 
 LOGGER = logging.getLogger("ntrm-demo")
 
@@ -30,7 +34,9 @@ def main() -> None:
         default=ROOT / "data_pipeline" / "examples" / "neso_snapshot_example.json",
         help="Saved NESO snapshot used for reproducible offline execution",
     )
-    parser.add_argument("--live", action="store_true", help="Fetch the latest valid actual NESO record")
+    parser.add_argument(
+        "--live", action="store_true", help="Fetch the latest valid actual NESO record"
+    )
     parser.add_argument("--model", type=Path, help="Optional trained Phase 1 model bundle")
     parser.add_argument("--contingencies", type=int, default=5)
     parser.add_argument("--risk-threshold", type=float, default=0.5)
@@ -57,6 +63,14 @@ def main() -> None:
         predictor=predictor,
         control_risk_threshold=args.risk_threshold,
     )
+    if not report.screening:
+        print("\nNTRM RESEARCH EXTENSION — END-TO-END DEMO")
+        print("No screening results produced for the given contingencies.")
+        print("Synthetic IEEE 39-bus study; not a model of the GB network or operational advice.")
+        print(f"Source observation: {snapshot.observed_at.isoformat()}")
+        print(f"Public-data demand: {snapshot.national_demand_mw:,.0f} MW")
+        return
+
     top = report.screening[0]
 
     print("\nNTRM RESEARCH EXTENSION — END-TO-END DEMO")
@@ -73,7 +87,7 @@ def main() -> None:
         print(f"Conditional severe-event probability: {top.conditional_probability:.3f}")
     print(f"Simulated unserved load: {top.simulated_unserved_mw:,.1f} MW")
     if report.simulated_intervention is None:
-        reason = "risk gate not exceeded" if predictor else "control disabled"
+        reason = "no trained model supplied" if predictor is None else "risk gate not exceeded"
         print(f"Simulated mitigation: not activated ({reason})")
     else:
         outcome = report.simulated_intervention

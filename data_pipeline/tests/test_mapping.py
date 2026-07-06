@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import pytest
+from test_snapshot import example_snapshot
 
 from cascade_ml.model import Branch, Generator, PowerCase
 from data_pipeline.case_mapping import MappingConfig, map_snapshot_to_case
-from test_snapshot import example_snapshot
 
 
 def base_case() -> PowerCase:

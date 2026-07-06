@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Sequence
+from typing import Literal
 
 from cascade_ml.power_flow import PowerFlowResult, solve_dc_power_flow
 
@@ -73,18 +74,29 @@ class NetworkAwareController:
                     continue
                 amount = min(self.action_step_mw, available)
                 action = _action_from_bid(bid, amount)
-                if self.budget is not None and current_state.intervention_cost + action.cost > self.budget:
+                if (
+                    self.budget is not None
+                    and current_state.intervention_cost + action.cost > self.budget
+                ):
                     continue
                 candidate_state = current_state.apply(action)
                 candidate_flow = solve_dc_power_flow(candidate_state.to_power_case(), active)
                 benefit = current_excess - _overload_excess(candidate_flow, self.target)
                 if benefit <= 1e-12:
                     continue
-                score = benefit if selection_mode == "centralised" else benefit / max(action.cost, 1e-12)
-                candidates.append((score, benefit, -action.cost, action, candidate_state, candidate_flow))
+                score = (
+                    benefit
+                    if selection_mode == "centralised"
+                    else benefit / max(action.cost, 1e-12)
+                )
+                candidates.append(
+                    (score, benefit, -action.cost, action, candidate_state, candidate_flow)
+                )
             if not candidates:
                 break
-            _, _, _, action, current_state, current_flow = max(candidates, key=lambda item: item[:3])
+            _, _, _, action, current_state, current_flow = max(
+                candidates, key=lambda item: item[:3]
+            )
             remaining[action.agent_id] -= action.amount_mw
 
         return ControlResult(

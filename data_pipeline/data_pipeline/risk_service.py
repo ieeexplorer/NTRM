@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from agent_control.controller import NetworkAwareController
 from agent_control.environment import ControlPolicy, ScenarioOutcome, run_scenario
-from agent_control.resources import BatteryAgent, FlexibleLoadAgent, GeneratorAgent
 from cascade_ml.model import PowerCase
 
 from .case_mapping import MappingConfig, MappingReport, map_snapshot_to_case
@@ -44,11 +43,9 @@ def assess_snapshot(
     should_control = (
         include_control
         and bool(screening)
-        and (
-            predictor is None
-            or screening[0].conditional_probability is not None
-            and screening[0].conditional_probability >= control_risk_threshold
-        )
+        and predictor is not None
+        and screening[0].conditional_probability is not None
+        and screening[0].conditional_probability >= control_risk_threshold
     )
     if should_control:
         intervention = run_scenario(
@@ -63,38 +60,6 @@ def assess_snapshot(
 
 def demonstration_agents(case: PowerCase):
     """Create documented synthetic resources; these are not real GB assets."""
+    from agent_control.sensitivity import PortfolioConfig, build_portfolio
 
-    load_buses = sorted(case.loads_mw, key=case.loads_mw.get, reverse=True)
-    agents = []
-    for bus in load_buses[:3]:
-        load = case.loads_mw[bus]
-        agents.append(
-            FlexibleLoadAgent(
-                f"synthetic-flex-{bus}",
-                bus,
-                max_shed_mw=min(50.0, 0.1 * load),
-                minimum_served_mw=0.8 * load,
-            )
-        )
-    for bus in load_buses[3:5]:
-        agents.append(
-            BatteryAgent(
-                f"synthetic-battery-{bus}",
-                bus,
-                max_power_mw=50.0,
-                energy_capacity_mwh=25.0,
-                state_of_charge=0.8,
-            )
-        )
-    for generator in case.generators:
-        if generator.max_mw > generator.scheduled_mw:
-            agents.append(
-                GeneratorAgent(
-                    f"synthetic-generator-{generator.generator_id}",
-                    generator.generator_id,
-                    max_increase_mw=50.0,
-                    ramp_mw_per_minute=10.0,
-                    response_minutes=5.0,
-                )
-            )
-    return agents
+    return build_portfolio(case, PortfolioConfig(name="demonstration"))

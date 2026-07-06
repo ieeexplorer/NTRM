@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from cascade_ml.case_loader import load_pypower_case
-from cascade_ml.dataset import generate_contingencies
 from agent_control.controller import NetworkAwareController
 from agent_control.environment import ControlPolicy, run_scenario
 from agent_control.sensitivity import build_portfolio, standard_portfolios
+from cascade_ml.case_loader import load_pypower_case
+from cascade_ml.dataset import generate_contingencies
 
 
 def main() -> None:
@@ -30,7 +30,7 @@ def main() -> None:
     contingencies = generate_contingencies(case.branch_ids, max_order=1)
     if args.scenario_limit > 0:
         contingencies = contingencies[: args.scenario_limit]
-    rows = []
+    rows: list[dict[str, str | int | float]] = []
     for portfolio in standard_portfolios():
         agents = build_portfolio(case, portfolio)
         controller = NetworkAwareController(duration_hours=args.duration_hours)
@@ -42,7 +42,7 @@ def main() -> None:
                 policy=ControlPolicy.AUCTION,
                 controller=controller,
             )
-            row = {
+            row: dict[str, str | int | float] = {
                 "portfolio": portfolio.name,
                 "contingency_key": outcome.contingency_key,
                 "baseline_unserved_mw": outcome.baseline_unserved_mw,
@@ -54,12 +54,13 @@ def main() -> None:
                 "action_count": outcome.action_count,
             }
             if args.unserved_cost_per_mwh is not None:
-                row["gross_avoided_cost"] = (
+                gross_avoided_cost = (
                     outcome.gross_avoided_blackout_mw
                     * args.duration_hours
                     * args.unserved_cost_per_mwh
                 )
-                row["net_value"] = row["gross_avoided_cost"] - outcome.intervention_cost
+                row["gross_avoided_cost"] = gross_avoided_cost
+                row["net_value"] = gross_avoided_cost - outcome.intervention_cost
             rows.append(row)
     frame = pd.DataFrame(rows)
     summary = frame.groupby("portfolio", as_index=False).agg(

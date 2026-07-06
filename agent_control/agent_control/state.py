@@ -29,7 +29,7 @@ class OperatingState:
             0.0,
         )
 
-    def apply(self, action: ControlAction) -> "OperatingState":
+    def apply(self, action: ControlAction) -> OperatingState:
         if action.amount_mw <= 0:
             raise ValueError("Control action amount must be positive")
         load_shed = dict(self.load_shed_mw)
@@ -42,7 +42,9 @@ class OperatingState:
         elif action.kind == "generator_increase":
             if action.generator_id is None:
                 raise ValueError("Generator action requires generator_id")
-            generator[action.generator_id] = generator.get(action.generator_id, 0.0) + action.amount_mw
+            generator[action.generator_id] = (
+                generator.get(action.generator_id, 0.0) + action.amount_mw
+            )
         else:
             raise ValueError(f"Unsupported action kind: {action.kind}")
         return replace(
@@ -56,9 +58,7 @@ class OperatingState:
     def to_power_case(self) -> PowerCase:
         loads = {
             bus: max(
-                load
-                - self.load_shed_mw.get(bus, 0.0)
-                - self.battery_injection_mw.get(bus, 0.0),
+                load - self.load_shed_mw.get(bus, 0.0) - self.battery_injection_mw.get(bus, 0.0),
                 0.0,
             )
             for bus, load in self.base_case.loads_mw.items()

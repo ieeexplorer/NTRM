@@ -45,7 +45,7 @@ class OperatingSnapshot:
         return payload
 
     @classmethod
-    def from_dict(cls, payload: dict) -> "OperatingSnapshot":
+    def from_dict(cls, payload: dict) -> OperatingSnapshot:
         values = dict(payload)
         values["retrieved_at"] = datetime.fromisoformat(values["retrieved_at"])
         values["observed_at"] = datetime.fromisoformat(values["observed_at"])
@@ -58,7 +58,7 @@ class OperatingSnapshot:
         destination.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
 
     @classmethod
-    def read_json(cls, path: str | Path) -> "OperatingSnapshot":
+    def read_json(cls, path: str | Path) -> OperatingSnapshot:
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 
 

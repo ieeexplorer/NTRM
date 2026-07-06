@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from cascade_ml.model import PowerCase
 
-from .resources import BatteryAgent, FlexibleLoadAgent, GeneratorAgent
+from .resources import BatteryAgent, FlexibleLoadAgent, GeneratorAgent, ResourceAgent
 
 
 @dataclass(frozen=True)
@@ -18,13 +18,13 @@ class PortfolioConfig:
     battery_capacity_scale: float = 1.0
 
 
-def build_portfolio(case: PowerCase, config: PortfolioConfig):
+def build_portfolio(case: PowerCase, config: PortfolioConfig) -> list[ResourceAgent]:
     """Construct a synthetic, documented resource portfolio for comparison."""
 
     if config.battery_capacity_scale < 0:
         raise ValueError("battery_capacity_scale cannot be negative")
-    load_buses = sorted(case.loads_mw, key=case.loads_mw.get, reverse=True)
-    agents = []
+    load_buses = sorted(case.loads_mw, key=lambda bus: case.loads_mw[bus], reverse=True)
+    agents: list[ResourceAgent] = []
     if config.include_flexible_load:
         for bus in load_buses[:3]:
             load = case.loads_mw[bus]

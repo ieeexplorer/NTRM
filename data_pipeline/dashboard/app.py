@@ -3,22 +3,33 @@
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 
 import streamlit as st
 
-from agent_control.predictor import ModelBundlePredictor
-from cascade_ml.case_loader import load_pypower_case
-from cascade_ml.dataset import generate_contingencies
-from data_pipeline.case_mapping import MappingConfig
-from data_pipeline.connectors import NesoDemandConnector
-from data_pipeline.dashboard_view import describe_flag, format_age, friendly_screening_frame
-from data_pipeline.risk_service import assess_snapshot
-from data_pipeline.snapshot import OperatingSnapshot
+# Resolve the example snapshot relative to this file.
+_ROOT = Path(__file__).resolve().parents[2]
+EXAMPLE_SNAPSHOT = _ROOT / "data_pipeline" / "examples" / "neso_snapshot_example.json"
+for _module_directory in ("cascade_ml", "agent_control", "data_pipeline"):
+    module_path = str(_ROOT / _module_directory)
+    if module_path not in sys.path:
+        sys.path.insert(0, module_path)
 
-ROOT = Path(__file__).resolve().parents[2]
-EXAMPLE_SNAPSHOT = ROOT / "data_pipeline" / "examples" / "neso_snapshot_example.json"
+from agent_control.predictor import ModelBundlePredictor  # noqa: E402
+from cascade_ml.case_loader import load_pypower_case  # noqa: E402
+from cascade_ml.dataset import generate_contingencies  # noqa: E402
+from data_pipeline.case_mapping import MappingConfig  # noqa: E402
+from data_pipeline.connectors import NesoDemandConnector  # noqa: E402
+from data_pipeline.dashboard_view import (  # noqa: E402
+    describe_flag,
+    format_age,
+    friendly_screening_frame,
+)
+from data_pipeline.risk_service import assess_snapshot  # noqa: E402
+from data_pipeline.snapshot import OperatingSnapshot  # noqa: E402
 
 st.set_page_config(
     page_title="NTRM Resilience Research Demo",
@@ -93,7 +104,7 @@ def load_selected_snapshot() -> OperatingSnapshot | None:
                     st.session_state["live_snapshot"] = fetch_live_snapshot()
                 except Exception as exc:
                     st.sidebar.error(f"Could not fetch NESO data: {exc}")
-        return st.session_state.get("live_snapshot")
+        return cast(OperatingSnapshot | None, st.session_state.get("live_snapshot"))
     uploaded = st.sidebar.file_uploader("Choose a snapshot", type=("json",))
     if uploaded is None:
         return None
@@ -106,12 +117,13 @@ def load_selected_snapshot() -> OperatingSnapshot | None:
 
 st.sidebar.header("Study controls")
 snapshot = load_selected_snapshot()
+case = load_case()
 contingency_limit = st.sidebar.slider(
-    "N−1 outages to screen",
+    "N-1 outages to screen",
     1,
-    46,
-    10,
-    help="Each scenario removes one branch from the synthetic IEEE 39-bus network.",
+    max(len(case.branch_ids), 1),
+    min(10, len(case.branch_ids)),
+    help="Each scenario removes one branch from the synthetic IEEE network.",
 )
 include_control = st.sidebar.checkbox(
     "Simulate mitigation for the highest-ranked outage",
@@ -121,13 +133,11 @@ with st.sidebar.expander("Advanced assumptions"):
     reference_demand = st.number_input(
         "Reference GB demand (MW)", 10_000.0, 60_000.0, 30_000.0, 500.0
     )
-    severe_threshold = st.slider(
-        "Severe-event threshold (% unserved)", 5, 50, 20, 5
-    ) / 100
+    severe_threshold = st.slider("Severe-event threshold (% unserved)", 5, 50, 20, 5) / 100
     use_model = st.checkbox("Use a trained Phase 1 model", value=False)
     model_path_text = st.text_input(
         "Model bundle path",
-        str(ROOT / "cascade_ml" / "models" / "cascade_models.joblib"),
+        str(_ROOT / "cascade_ml" / "models" / "cascade_models.joblib"),
         disabled=not use_model,
     )
     risk_threshold = st.slider(
@@ -140,16 +150,18 @@ st.sidebar.caption("Tip: you do not need the Deploy button to run this dashboard
 if snapshot is None:
     st.info("Select or fetch a data snapshot in the sidebar to begin.", icon="👈")
     st.stop()
+assert snapshot is not None
 
 predictor = None
 if use_model:
     model_path = Path(model_path_text)
     if not model_path.exists():
-        st.error("The selected model bundle does not exist. Choose another path or disable ML mode.")
+        st.error(
+            "The selected model bundle does not exist. Choose another path or disable ML mode."
+        )
         st.stop()
     predictor = ModelBundlePredictor(model_path)
 
-case = load_case()
 contingencies = generate_contingencies(case.branch_ids, max_order=1)[:contingency_limit]
 with st.spinner("Running conditional cascade screening…"):
     report = assess_snapshot(
@@ -166,9 +178,15 @@ with st.spinner("Running conditional cascade screening…"):
 st.subheader("How to read this dashboard")
 step_columns = st.columns(3)
 steps = (
-    ("1 · Public context", "A timestamped NESO national-demand record is loaded and quality checked."),
+    (
+        "1 · Public context",
+        "A timestamped NESO national-demand record is loaded and quality checked.",
+    ),
     ("2 · Synthetic study", "Demand scales an IEEE 39-bus test case within bounded assumptions."),
-    ("3 · Conditional results", "Specified branch outages are simulated; optional resources are tested."),
+    (
+        "3 · Conditional results",
+        "Specified branch outages are simulated; optional resources are tested.",
+    ),
 )
 for column, (number, text) in zip(step_columns, steps, strict=True):
     column.markdown(
@@ -183,7 +201,7 @@ current_age_hours = max(
 metric_columns = st.columns(4)
 metric_columns[0].metric("NESO demand (MW)", f"{snapshot.national_demand_mw:,.0f}")
 metric_columns[1].metric("Observation age", format_age(current_age_hours))
-metric_columns[2].metric("Synthetic demand scale", f"{report.mapping.applied_demand_scale:.3f}×")
+metric_columns[2].metric("Synthetic demand scale", f"{report.mapping.applied_demand_scale:.3f}x")
 metric_columns[3].metric("Outages screened", len(report.screening))
 
 all_flags = tuple(dict.fromkeys((*snapshot.quality_flags, *report.mapping.warnings)))
@@ -211,14 +229,14 @@ with overview_tab:
             )
         else:
             st.metric("Conditional severe-event probability", f"{top.conditional_probability:.1%}")
-        st.caption(
-            "Branch IDs are zero-based rows in the PYPOWER/MATPOWER case39 branch matrix."
-        )
+        st.caption("Branch IDs are zero-based rows in the PYPOWER/MATPOWER case39 branch matrix.")
     with right:
         st.markdown("#### Simulated consequence by outage")
         chart = table.head(12).set_index("Outage branch IDs")[["Simulated unserved load (MW)"]]
         st.bar_chart(chart, color="#0b7285")
-        st.caption("Zero means this surrogate produced no final involuntary load loss for that outage.")
+        st.caption(
+            "Zero means this surrogate produced no final involuntary load loss for that outage."
+        )
 
 with contingency_tab:
     st.markdown("#### Ranked conditional screening results")
@@ -245,7 +263,9 @@ with intervention_tab:
     elif outcome is None:
         st.success("The selected ML risk gate was not exceeded, so no intervention was activated.")
     elif outcome.action_count == 0:
-        st.success("No feasible intervention was required for the highest-ranked screened scenario.")
+        st.success(
+            "No feasible intervention was required for the highest-ranked screened scenario."
+        )
     else:
         st.markdown("#### Before-and-after simulation")
         columns = st.columns(4)

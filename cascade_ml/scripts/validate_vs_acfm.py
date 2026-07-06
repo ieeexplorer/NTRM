@@ -17,7 +17,9 @@ def main() -> None:
     parser.add_argument("--dc", type=Path, required=True)
     parser.add_argument("--acfm", type=Path, required=True)
     parser.add_argument("--metrics", type=Path, default=Path("validation_results/metrics.json"))
-    parser.add_argument("--paired", type=Path, default=Path("validation_results/paired_results.csv"))
+    parser.add_argument(
+        "--paired", type=Path, default=Path("validation_results/paired_results.csv")
+    )
     parser.add_argument("--acfm-unserved-column", default="final_unserved_mw")
     parser.add_argument("--acfm-severe-column", default="severe_event")
     args = parser.parse_args()
@@ -33,5 +35,7 @@ def main() -> None:
     args.metrics.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     paired.to_csv(args.paired, index=False)
     print(json.dumps(metrics, indent=2))
+
+
 if __name__ == "__main__":
     main()

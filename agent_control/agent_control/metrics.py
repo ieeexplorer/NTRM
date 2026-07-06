@@ -22,16 +22,13 @@ def outcomes_frame(outcomes: list[ScenarioOutcome]) -> pd.DataFrame:
 
 def summarise(outcomes: list[ScenarioOutcome]) -> pd.DataFrame:
     frame = outcomes_frame(outcomes)
-    return (
-        frame.groupby("policy", as_index=False)
-        .agg(
-            scenarios=("contingency_key", "count"),
-            activation_rate=("activated", "mean"),
-            mean_baseline_unserved_mw=("baseline_unserved_mw", "mean"),
-            mean_controlled_unserved_mw=("controlled_unserved_mw", "mean"),
-            mean_preventive_shed_mw=("preventive_load_shed_mw", "mean"),
-            mean_gross_avoided_mw=("gross_avoided_blackout_mw", "mean"),
-            mean_net_avoided_mw=("net_avoided_loss_mw", "mean"),
-            mean_intervention_cost=("intervention_cost", "mean"),
-        )
+    return frame.groupby("policy", as_index=False).agg(
+        scenarios=("contingency_key", "count"),
+        activation_rate=("activated", "mean"),
+        mean_baseline_unserved_mw=("baseline_unserved_mw", "mean"),
+        mean_controlled_unserved_mw=("controlled_unserved_mw", "mean"),
+        mean_preventive_shed_mw=("preventive_load_shed_mw", "mean"),
+        mean_gross_avoided_mw=("gross_avoided_blackout_mw", "mean"),
+        mean_net_avoided_mw=("net_avoided_loss_mw", "mean"),
+        mean_intervention_cost=("intervention_cost", "mean"),
     )

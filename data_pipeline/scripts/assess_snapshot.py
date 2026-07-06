@@ -10,7 +10,6 @@ from pathlib import Path
 from agent_control.predictor import ModelBundlePredictor
 from cascade_ml.case_loader import load_pypower_case
 from cascade_ml.dataset import generate_contingencies
-
 from data_pipeline.case_mapping import MappingConfig
 from data_pipeline.connectors import NesoDemandConnector
 from data_pipeline.risk_service import assess_snapshot

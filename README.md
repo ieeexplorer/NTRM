@@ -24,9 +24,10 @@ maintainers is tracked in
 After installing the development environment, the default command uses a
 committed NESO snapshot so the output is reproducible and works offline:
 
-```powershell
+```bash
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+source .venv/bin/activate   # Linux / macOS
+# .venv\Scripts\Activate.ps1  # Windows
 python -m pip install -r requirements-dev.txt
 python run_demo.py
 ```
@@ -54,7 +55,7 @@ network under study are derived, using MATLAB and BCT functions. The following
 parameters are calculated:
 
 - Degree centrality of each node (bus)
-- Eigenvecor centrality of each node (bus)
+- Eigenvector centrality of each node (bus)
 - Betweenness centrality of each node (bus)
 - Closeness centrality of each node (bus)
 - Clustering coefficient of each node (bus)

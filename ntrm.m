@@ -1,4 +1,4 @@
-function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
+function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size, fail_min)
 %%  Network Theory Resilience Metric (NTRM)
 
 %   This code samples cascade scenarios from a MATPOWER case file, then
@@ -6,9 +6,9 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
 %   resulting cases. Then, a set of network science metrics for the network
 %   under study are derived, using MATLAB and BCT functions. The following
 %   parameters are calculated:
-% 
+%
 %       - Degree centrality of each node (bus)
-%       - Eigenvecor centrality of each node (bus)
+%       - Eigenvector centrality of each node (bus)
 %       - Betweenness centrality of each node (bus)
 %       - Closeness centrality of each node (bus)
 %       - Clustering coefficient of each node (bus)
@@ -17,7 +17,7 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
 %       - [Degree of node(i) * Degree of node(j)] for each edge (branch)
 %       - Total load shedding each branch causes in all scenarios
 %       - Total amount of times each branch contributed to a cascade
-% 
+%
 %   Prerequisites:
 %       - Matlab R2020b or later (but may work with earlier versions)
 %       - Matpower 7.1 or later
@@ -53,18 +53,18 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
 %   Redistribution and use in source and binary forms, with or without
 %   modification, are permitted provided that the following conditions are
 %   met:
-% 
+%
 %   1. Redistributions of source code must retain the above copyright
 %      notice, this list of conditions and the following disclaimer.
-% 
+%
 %   2. Redistributions in binary form must reproduce the above copyright
 %      notice, this list of conditions and the following disclaimer in the
 %      documentation and/or other materials provided with the distribution.
-% 
+%
 %   3. Neither the name of the copyright holder nor the names of its
 %      contributors may be used to endorse or promote products derived from
 %      this software without specific prior written permission.
-% 
+%
 %   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 %   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 %   TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -84,13 +84,16 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     %source_file = 'case39.m'; % specify the desired MATPOWER case
     % Define the minimum number of initial failures. This is used in the
     % scenario generation, to define the complete set of scenarios that
-    % will be generated.
-    fail_min = 3;
+    % will be generated. Default: 3.
+    if nargin < 3 || isempty(fail_min)
+        fail_min = 3;
+    end
 
 %% Removing existing content in TempTestCase.m then copying the desired MATPOWER case and pasting it back to TempTestCase
 
-    % This is to remove all content of a temporary .m file 
+    % This is to remove all content of a temporary .m file
     file_name = 'TempTestCase.m'; %specify the name of the temporary .m file
+    cleanupObj = onCleanup(@() delete(file_name)); % auto-delete on exit/error
     fileID = fopen(file_name,'w');
     fprintf(fileID,'');
     fclose(fileID);
@@ -103,19 +106,19 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     fileID = fopen(destination_file,'w');
     fwrite(fileID,content);
     fclose(fileID);
-    
+
 %% Loading and conditioning the case file
 
     mpc = loadcase('TempTestCase');
-    
+
     % OPTIONAL: Remove any branches? Note that if multiple branches are
     % removed, the index changes every time a branch is removed.
 %     EXAMPLE CODE:
 %     mpc.branch(3,:) = [];
 %     mpc.branch(5,:) = [];
-    
+
     %%%%%%%%%%%%%%
-    
+
     n_bus = size(mpc.bus,1);%Number of buses
     n_branch = size(mpc.branch,1);%Number of branches
 
@@ -125,13 +128,13 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     fprintf('Working out scenario list...\n');
     f = waitbar(0,'Working out scenario list');%create a progress bar window
     total = 0;
-    
+
     %calculate number of maximum possible combinations
     for k = 1:fail_min
         combos = nchoosek(1:n_branch, k);
         total = total + size(combos,1);
     end
-    
+
     if sample_size >= total
         %%%%%%%%%%%%%%%%%%% FULL SAMPLING
         % The following parallel for loop creates all the possible scenarios
@@ -155,24 +158,24 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
             for i = 1:(sample_size/fail_min)
                 scenario_count = scenario_count + 1;
                 rng("shuffle");%this ensures that the random seed is different every time - if the same random results are required consistently, then comment this out
-                initial_contingency{scenario_count,:} = randi(n_bus,[k 1]);
+                initial_contingency{scenario_count,:} = randi(n_branch,[k 1]);
                 waitbar((scenario_count-1)/sample_size,f,strcat('Working out scenario list: scenario...',string(scenario_count-1),'/',string(sample_size)));
             end
         end
     end
-    
+
     close(f);
     fprintf('Scenario list generated, now running cascade model...\n');
 
  %% Initialising and running cascade model
-    
+
     % load default AC-CFM settings
     settings = get_default_settings();
-    % enable(1)/disable(0) verbose AC-CFM output – just for testing
+    % enable(1)/disable(0) verbose AC-CFM output â€“ just for testing
     settings.verbose = 0;
     % run cascade model
     result = accfm_branch_scenarios(mpc, initial_contingency, settings);
-  
+
 %% Processing the cascade model results
 
     % set up the arrays that will receive the cascade count and shedding
@@ -181,13 +184,13 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     ValidCascadeSamples = 0;
     FailedSamples = 0;
     NoCascadeSamples = 0;
-    
+
     % tally up the cascade count and shedding
     for i = 1:size(initial_contingency,1)
         if result.lost_load_final(i) > 0 %if a cascade is developed, i.e. there is load shedding
            for j = 1:size(initial_contingency,2)
                 cascade_branchNumber(i,initial_contingency{i,j}) = 1;  %save in a matrix which buses caused the cascade
-                totalLoadShedding(i,initial_contingency{i,j}) = result.lost_load_final(i); 
+                totalLoadShedding(i,initial_contingency{i,j}) = result.lost_load_final(i);
            end
            ValidCascadeSamples = ValidCascadeSamples + 1;%count the total number of cascades
         elseif result.lost_load_final(i) < 0
@@ -196,9 +199,9 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
            NoCascadeSamples = NoCascadeSamples + 1;%count the number of samples where no cascade happened.
         end
     end
-    
+
     % output the final values for load shedding
-    totalloadshedding_branch = transpose(sum(totalLoadShedding,1)); %shows how much loaded shedding each branch causes in all scenarios 
+    totalloadshedding_branch = transpose(sum(totalLoadShedding,1)); %shows how much loaded shedding each branch causes in all scenarios
     % output the final values for the cascade count
     cascade_branchNumber_total = transpose(sum(cascade_branchNumber,1));%shows how many times each branch contributed to a failure
 
@@ -219,7 +222,7 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     % derive and plot the graph B
     B = graph(A);
     plot(B)
-    
+
     % calculate the network science and electrical parameters FOR THE NODES:
     % - Degree centrality
     % - Eigenvector centrality
@@ -238,17 +241,17 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     cen_de(1:size(mpc.bus(:,1)),7) = centrality(B,'closeness');
     cen_de(1:size(mpc.bus(:,1)),8) = clustering_coef_bu(A);
     cen_de(1:size(mpc.bus(:,1)),9) = self_admittance;
-    
+
     % calculate the network science parameters FOR THE BRANCHES
     % (note that this requires the Brain Connectivity Toolbox):
     % - Edge betweenness centrality
     % - Degree of node(i) * Degree of node(j)
     EBC = edge_betweenness_bin(A);
     for i = 1:size(mpc.branch(:,1))
-        cen_de_2(i:size(mpc.branch(:,1)),1) = cen_de(mpc.branch(i,1),4) * cen_de(mpc.branch(i,2),4);
-        cen_de_2(i:size(mpc.branch(:,1)),2) = EBC(mpc.branch(i,1),mpc.branch(i,2));
+        cen_de_2(i,1) = cen_de(mpc.branch(i,1),4) * cen_de(mpc.branch(i,2),4);
+        cen_de_2(i,2) = EBC(mpc.branch(i,1),mpc.branch(i,2));
     end
-    
+
 %% Return results
     NetworkTheoryResilienceMetric.BusList = cen_de(1:size(mpc.bus(:,1)),1);
     NetworkTheoryResilienceMetric.BranchBusFrom = cen_de(:,2);
@@ -268,11 +271,6 @@ function NetworkTheoryResilienceMetric = ntrm(source_file, sample_size)
     NetworkTheoryResilienceMetric.FailedSamples = FailedSamples;
     NetworkTheoryResilienceMetric.NoCascadeSamples = NoCascadeSamples;
     NetworkTheoryResilienceMetric.initial_contingency = initial_contingency;
-    
+
  %% Tidy up
-    % This is to remove all content of a temporary .m file 
-    file_name = 'TempTestCase.m'; %specify the name of the temporary .m file
-    fileID = fopen(file_name,'w');
-    fprintf(fileID,'');
-    fclose(fileID);
-    
+    % TempTestCase.m is automatically deleted by the onCleanup object.
