@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "case": "case39",
+    "n_buses": 39,
+    "n_branches": 46,
+    "n_contingencies": 46,
+    "contingency_type": "N-1_single_branch",
+    "branch_indexing": "zero_based",
+    "solver": "AC-CFM",
+    "matlab_function": "TO_BE_CONFIRMED",
+    "generated_at": null,
+    "matpower_version": null,
+    "notes": "Schema placeholder only. Populate contingencies after the AC-CFM MATLAB entry point and output fields are confirmed."
+  },
+  "contingencies": []
+}

@@ -17,6 +17,28 @@ contingency_key,final_unserved_mw,severe_event
 `contingency_key` must use the same stable, zero-based MATPOWER branch-row IDs in
 both files. The severe-event threshold must also be identical and documented.
 
+## Case39 N-1 AC-CFM fixture
+
+The placeholder JSON schema lives at
+`tests/fixtures/case39_ac_cfm_n1_schema.json`. It is intentionally empty until a
+MATLAB reviewer confirms the exact AC-CFM entry point and generates real output.
+
+When populated, the fixture should contain all 46 case39 single-branch
+contingencies. Use zero-based Python branch IDs as the canonical key and include
+the one-based MATLAB row as `matlab_branch_row` for cross-reference. Each row
+should include:
+
+- `branch_idx`;
+- `matlab_branch_row`;
+- `from_bus`;
+- `to_bus`;
+- `ac_branch_loadings_mw`;
+- `ac_cascade_flag`;
+- `ac_unserved_mw`.
+
+The accompanying tests validate the schema today and skip the populated-fixture
+checks until the `contingencies` array contains real AC-CFM results.
+
 ## Suggested experiment
 
 1. Fix the MATPOWER case, operating point, contingency list, protection/settings,
