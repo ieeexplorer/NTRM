@@ -19,15 +19,53 @@ The technical roadmap is documented in
 maintainers is tracked in
 [`sskazakos/NTRM#1`](https://github.com/sskazakos/NTRM/issues/1).
 
-## Run the integrated demonstration
+## Quick start for a new user
 
-After installing the development environment, the default command uses a
-committed NESO snapshot so the output is reproducible and works offline:
+You need Git and Python 3.10 or newer.
+
+```bash
+git clone -b research-cascade-prediction https://github.com/ieeexplorer/NTRM.git
+cd NTRM
+```
+
+Then run the setup script for your operating system:
+
+```bash
+# Linux / macOS
+bash setup.sh
+
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File setup.ps1
+```
+
+The setup script creates a local `.venv`, installs the Python packages, and runs
+the offline demo. The offline demo uses a committed NESO snapshot, so it works
+without API keys and without live network data.
+
+After setup, activate the environment whenever you return to the project:
+
+```bash
+# Linux / macOS
+source .venv/bin/activate
+
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+```
+
+Then run:
+
+```bash
+python run_demo.py
+```
+
+## Manual setup
+
+If you prefer to set up the environment yourself, run:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate   # Linux / macOS
-# .venv\Scripts\Activate.ps1  # Windows
+# .\.venv\Scripts\Activate.ps1  # Windows PowerShell
 python -m pip install -r requirements-dev.txt
 python run_demo.py
 ```
@@ -36,6 +74,17 @@ Use `python run_demo.py --live` to fetch the latest valid actual NESO demand
 record. Add `--model PATH` only when a trained model appropriate to the mapped
 operating range is available. Without one, the demo does not invent a risk
 probability.
+
+## Common commands
+
+| Goal | Command |
+|---|---|
+| Run the offline demo | `python run_demo.py` |
+| Run the demo with live NESO demand | `python run_demo.py --live` |
+| Generate N-1 scenarios and train models | `make generate-and-train` |
+| Run all tests | `make test` |
+| Run agent-control experiments | `python agent_control/scripts/run_experiments.py` |
+| Launch the Streamlit dashboard | `streamlit run data_pipeline/dashboard/app.py` |
 
 ## Reproduce DC-only training metrics
 
@@ -50,6 +99,37 @@ This writes `cascade_ml/data/scenarios.csv`,
 Those files are ignored by Git; report the command, seed, threshold, and package
 versions alongside any metrics. These are DC-surrogate metrics only, not
 validated AC-CFM research findings.
+
+## Troubleshooting
+
+### `python` is not found
+
+Install Python 3.10 or newer from <https://www.python.org/downloads/>. On
+Windows, tick **Add Python to PATH** during installation.
+
+### PowerShell blocks `setup.ps1`
+
+Run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup.ps1
+```
+
+### `ModuleNotFoundError: No module named 'cascade_ml'`
+
+Activate the virtual environment and reinstall the local packages:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+### `streamlit` is not found
+
+Install the optional dashboard dependency:
+
+```bash
+python -m pip install -e "data_pipeline[dashboard]"
+```
 
 ## Evidence status
 
