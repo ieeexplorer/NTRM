@@ -30,7 +30,7 @@ FEATURE_NAMES: tuple[str, ...] = (
     "initial_unserved_fraction",
 )
 
-__all__ = ["FEATURE_VERSION", "FEATURE_NAMES", "extract_features"]
+__all__ = ["FEATURE_NAMES", "FEATURE_VERSION", "extract_features"]
 
 
 def _feature_dict(case: PowerCase, initial_outages: tuple[int, ...]) -> dict[str, float]:

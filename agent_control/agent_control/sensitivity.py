@@ -25,7 +25,7 @@ class PortfolioConfig:
 def build_portfolio(
     case: PowerCase,
     config: PortfolioConfig,
-    resource_config: "ResourceConfig | None" = None,
+    resource_config: ResourceConfig | None = None,
 ) -> list[ResourceAgent]:
     """Construct a synthetic, documented resource portfolio for comparison."""
 

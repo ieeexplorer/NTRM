@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from .model import PowerCase
 from .power_flow import PowerFlowResult, solve_dc_power_flow
 
-__all__ = ["CascadeStep", "CascadeResult", "simulate_cascade"]
+__all__ = ["CascadeResult", "CascadeStep", "simulate_cascade"]
 
 
 @dataclass(frozen=True)
@@ -85,3 +85,5 @@ def simulate_cascade(
             )
         )
         active.difference_update(overloaded)
+
+    raise RuntimeError("Cascade loop exhausted without returning a result")

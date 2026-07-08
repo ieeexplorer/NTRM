@@ -65,4 +65,6 @@ def demonstration_agents(case: PowerCase, resource_config=None):
     """Create documented synthetic resources; these are not real GB assets."""
     from agent_control.sensitivity import PortfolioConfig, build_portfolio
 
-    return build_portfolio(case, PortfolioConfig(name="demonstration"), resource_config=resource_config)
+    return build_portfolio(
+        case, PortfolioConfig(name="demonstration"), resource_config=resource_config
+    )

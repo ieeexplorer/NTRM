@@ -1,3 +1,4 @@
 -e ./cascade_ml[test]
 -e ./agent_control[test]
 -e ./data_pipeline[test]
+tomli>=2; python_version < "3.11"

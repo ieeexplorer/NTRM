@@ -13,7 +13,7 @@ from .cascade import simulate_cascade
 from .features import extract_features
 from .model import PowerCase
 
-__all__ = ["generate_contingencies", "build_dataset"]
+__all__ = ["build_dataset", "generate_contingencies"]
 
 
 def generate_contingencies(

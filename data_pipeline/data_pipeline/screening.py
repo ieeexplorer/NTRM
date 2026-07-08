@@ -8,7 +8,7 @@ import pandas as pd
 
 from cascade_ml.cascade import simulate_cascade
 from cascade_ml.model import PowerCase
-from cascade_ml.protocols import RiskPredictor  # noqa: F401 — re-export for backward compatibility
+from cascade_ml.protocols import RiskPredictor
 
 
 @dataclass(frozen=True)

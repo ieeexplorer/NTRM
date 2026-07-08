@@ -139,7 +139,6 @@ def _compute_ptdf(case, active_branch_ids: set[int]) -> tuple[np.ndarray, dict[i
     flows without re-solving the full DC power flow, providing a major
     performance improvement for the controller's inner loop.
     """
-    from cascade_ml.model import PowerCase
 
     branches_by_id = {b.branch_id: b for b in case.branches}
     active_branches = [branches_by_id[bid] for bid in active_branch_ids if bid in branches_by_id]
@@ -156,9 +155,7 @@ def _compute_ptdf(case, active_branch_ids: set[int]) -> tuple[np.ndarray, dict[i
         B[i, j] -= susceptance
         B[j, i] -= susceptance
 
-    ref = max(buses, key=lambda b: sum(
-        g.scheduled_mw for g in case.generators if g.bus == b
-    ))
+    ref = max(buses, key=lambda b: sum(g.scheduled_mw for g in case.generators if g.bus == b))
     ref_idx = position[ref]
     retained = [i for i in range(n_buses) if i != ref_idx]
     B_reduced = B[np.ix_(retained, retained)]
@@ -169,7 +166,10 @@ def _compute_ptdf(case, active_branch_ids: set[int]) -> tuple[np.ndarray, dict[i
     for k, branch in enumerate(active_branches):
         i, j = position[branch.from_bus], position[branch.to_bus]
         for m, bus_idx in enumerate(retained):
-            ptdf[k, bus_idx] = (1.0 / branch.x_pu) * (B_reduced_inv[i if i < len(retained) else -1, m] - B_reduced_inv[j if j < len(retained) else -1, m])
+            ptdf[k, bus_idx] = (1.0 / branch.x_pu) * (
+                B_reduced_inv[i if i < len(retained) else -1, m]
+                - B_reduced_inv[j if j < len(retained) else -1, m]
+            )
         ptdf[k, ref_idx] = 0.0  # reference bus has no sensitivity
 
     return ptdf, position, ref_idx

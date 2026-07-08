@@ -144,7 +144,7 @@ def _settlement_key(row: dict[str, str]) -> tuple[str, int]:
     try:
         return row["SETTLEMENT_DATE"], int(row["SETTLEMENT_PERIOD"])
     except (KeyError, ValueError) as exc:
-        raise ValueError(f"Malformed settlement row: missing or invalid date/period") from exc
+        raise ValueError("Malformed settlement row: missing or invalid date/period") from exc
 
 
 def _settlement_start_utc(date_text: str, period: int) -> datetime:

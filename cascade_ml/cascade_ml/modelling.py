@@ -33,7 +33,7 @@ from sklearn.preprocessing import StandardScaler
 
 from .features import FEATURE_VERSION
 
-__all__ = ["ModelBundle", "train_models", "save_model_bundle"]
+__all__ = ["ModelBundle", "save_model_bundle", "train_models"]
 
 
 @dataclass(frozen=True)
