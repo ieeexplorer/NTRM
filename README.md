@@ -1,111 +1,173 @@
-# Sussex PhD research extension
+# NTRM Research Extension
 
-> **Independent research prototype.** This fork explores methods aligned with
-> the theme *Artificial Intelligence and Agent-based Control for Improving
-> Energy Network Resilience to Threats*. It is not an official University of
-> Sussex, NESO, or electricity-operator tool.
+This branch extends the original Network Theory Resilience Metric (NTRM) with
+Python research modules for cascade simulation, machine-learning risk scoring,
+agent-based mitigation, and public-data driven screening.
 
-The extension connects three reproducible modules while preserving the original
-MATLAB NTRM implementation:
+> **Independent research prototype.** This repository is not an official
+> University of Sussex, NESO, or electricity-operator tool. The Python extension
+> uses synthetic IEEE test-case conditions and is intended for reproducible
+> research experiments, not operational advice.
 
-| Module | Purpose |
+## What You Can Run
+
+| Module | What it does |
 |---|---|
-| [`cascade_ml`](cascade_ml/) | DC cascade surrogate, scenario generation, graph features, ML baselines, and an executable AC-CFM comparison protocol. |
-| [`agent_control`](agent_control/) | Network-aware coordination of flexible load, batteries, and generators with paired control and sensitivity experiments. |
-| [`data_pipeline`](data_pipeline/) | Provenance-preserving NESO snapshots mapped to bounded synthetic IEEE test-case conditions for conditional screening. |
+| [`cascade_ml`](cascade_ml/) | DC cascade surrogate, scenario generation, graph features, ML baselines, and an AC-CFM comparison protocol. |
+| [`agent_control`](agent_control/) | Flexible-load, battery, and generator agents with centralised, auction, and risk-gated control experiments. |
+| [`data_pipeline`](data_pipeline/) | Public NESO demand snapshots mapped to bounded synthetic IEEE 39-bus operating conditions. |
+| [`ntrm.m`](ntrm.m) | Original MATLAB NTRM entry point, preserved for the AC-CFM workflow. |
 
-The technical roadmap is documented in
-[`docs/research_roadmap.md`](docs/research_roadmap.md). Discussion with the NTRM
-maintainers is tracked in
+The technical roadmap is in
+[`docs/research_roadmap.md`](docs/research_roadmap.md). Discussion with the
+upstream NTRM maintainers is tracked in
 [`sskazakos/NTRM#1`](https://github.com/sskazakos/NTRM/issues/1).
 
-## Quick start for a new user
+## Quick Start
 
-You need Git and Python 3.10 or newer.
+You need:
+
+- Git
+- Python 3.10 or newer
+
+Clone this branch:
 
 ```bash
 git clone -b research-cascade-prediction https://github.com/ieeexplorer/NTRM.git
 cd NTRM
 ```
 
-Then run the setup script for your operating system:
+Run the setup script for your system:
 
 ```bash
 # Linux / macOS
 bash setup.sh
+```
 
+```powershell
 # Windows PowerShell
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-The setup script creates a local `.venv`, installs the Python packages, and runs
-the offline demo. The offline demo uses a committed NESO snapshot, so it works
-without API keys and without live network data.
+The script will:
 
-After setup, activate the environment whenever you return to the project:
+1. Create a local `.venv` virtual environment.
+2. Install the Python packages from `requirements-dev.txt`.
+3. Run the offline demo with the committed NESO example snapshot.
+
+No API key is required. The default demo works offline.
+
+## After Setup
+
+Activate the environment whenever you come back to the project:
 
 ```bash
 # Linux / macOS
 source .venv/bin/activate
+```
 
+```powershell
 # Windows PowerShell
 .\.venv\Scripts\Activate.ps1
 ```
 
-Then run:
+Run the reproducible offline demo:
 
 ```bash
 python run_demo.py
 ```
 
-## Manual setup
-
-If you prefer to set up the environment yourself, run:
+Fetch the latest valid NESO demand record instead:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # Linux / macOS
-# .\.venv\Scripts\Activate.ps1  # Windows PowerShell
-python -m pip install -r requirements-dev.txt
-python run_demo.py
+python run_demo.py --live
 ```
 
-Use `python run_demo.py --live` to fetch the latest valid actual NESO demand
-record. Add `--model PATH` only when a trained model appropriate to the mapped
-operating range is available. Without one, the demo does not invent a risk
+If you have a trained model bundle, pass it explicitly:
+
+```bash
+python run_demo.py --model cascade_ml/models/cascade_models.joblib
+```
+
+Without a model path, the demo intentionally does not invent an ML risk
 probability.
 
-## Common commands
+## Common Tasks
 
 | Goal | Command |
 |---|---|
 | Run the offline demo | `python run_demo.py` |
-| Run the demo with live NESO demand | `python run_demo.py --live` |
-| Generate N-1 scenarios and train models | `make generate-and-train` |
-| Run all tests | `make test` |
+| Run the demo with live NESO data | `python run_demo.py --live` |
+| Run all tests | `python -m pytest cascade_ml/tests agent_control/tests data_pipeline/tests -v` |
+| Generate deterministic N-1 scenarios | `cd cascade_ml && python scripts/generate_dataset.py --max-order 1 --output data/scenarios.csv` |
+| Train the baseline models | `cd cascade_ml && python scripts/train_model.py --data data/scenarios.csv --output models/cascade_models.joblib --metrics models/metrics.json` |
 | Run agent-control experiments | `python agent_control/scripts/run_experiments.py` |
-| Launch the Streamlit dashboard | `streamlit run data_pipeline/dashboard/app.py` |
+| Run sensitivity analysis | `python agent_control/scripts/run_sensitivity.py --scenario-limit 10` |
 
-## Reproduce DC-only training metrics
-
-The first reproducible model run should use the deterministic N-1 scenario set:
+If you have `make` installed, the same workflow is available through shortcuts:
 
 ```bash
+make test
 make generate-and-train
+make sensitivity
 ```
 
-This writes `cascade_ml/data/scenarios.csv`,
-`cascade_ml/models/cascade_models.joblib`, and `cascade_ml/models/metrics.json`.
-Those files are ignored by Git; report the command, seed, threshold, and package
-versions alongside any metrics. These are DC-surrogate metrics only, not
-validated AC-CFM research findings.
+## Optional Dashboard
+
+The Streamlit dashboard is optional. Install its extra dependency first:
+
+```bash
+python -m pip install -e "data_pipeline[dashboard]"
+streamlit run data_pipeline/dashboard/app.py
+```
+
+## Manual Setup
+
+Use this path if you do not want to run `setup.sh` or `setup.ps1`:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+python run_demo.py
+```
+
+Windows PowerShell activation command:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+## Outputs And Generated Files
+
+Training commands write generated artifacts such as:
+
+- `cascade_ml/data/scenarios.csv`
+- `cascade_ml/models/cascade_models.joblib`
+- `cascade_ml/models/metrics.json`
+- `agent_control/results/*.csv`
+- `data_pipeline/results/*.csv`
+
+These files are ignored by Git. When reporting results, include the command,
+random seed, threshold settings, and package versions used to reproduce them.
+
+## Evidence Status
+
+- Unit and integration tests verify software behaviour on controlled cases.
+- Public NESO data parameterises a synthetic IEEE 39-bus scenario; it does not
+  reconstruct the GB network.
+- DC results have not yet been validated against paired AC-CFM runs.
+- Generated model metrics, intervention benefits, and cost assumptions are not
+  research findings until the experiments are reproduced and reviewed.
 
 ## Troubleshooting
 
 ### `python` is not found
 
 Install Python 3.10 or newer from <https://www.python.org/downloads/>. On
-Windows, tick **Add Python to PATH** during installation.
+Windows, tick **Add Python to PATH** during installation, then reopen your
+terminal.
 
 ### PowerShell blocks `setup.ps1`
 
@@ -123,6 +185,11 @@ Activate the virtual environment and reinstall the local packages:
 python -m pip install -r requirements-dev.txt
 ```
 
+### `make` is not available
+
+Use the Python commands in [Common Tasks](#common-tasks). The Makefile is only a
+shortcut layer.
+
 ### `streamlit` is not found
 
 Install the optional dashboard dependency:
@@ -131,72 +198,40 @@ Install the optional dashboard dependency:
 python -m pip install -e "data_pipeline[dashboard]"
 ```
 
-## Evidence status
+## Original MATLAB NTRM
 
-- Unit and integration tests verify software behaviour on controlled cases.
-- Public NESO data parameterises a synthetic IEEE 39-bus scenario; it does not
-  reconstruct the GB network.
-- DC results have not yet been validated against paired AC-CFM runs.
-- Generated model metrics, intervention benefits, and cost assumptions are not
-  presented as research findings until their experiments are reproduced and
-  reviewed.
+The original NTRM samples cascade scenarios from a MATPOWER case file, runs the
+AC Cascading Failure Model (AC-CFM), and derives network-science metrics using
+MATLAB and BCT functions.
 
-# Original Network Theory Resilience Metric (NTRM)
-The Network Theory Resilience Metric (NTRM) samples cascade scenarios from 
-a MATPOWER case file, then runs the AC Cascading Failure Model (AC-CFM) code,
-for all the resulting cases. Then, a set of network science metrics for the
-network under study are derived, using MATLAB and BCT functions. The following
-parameters are calculated:
+It calculates:
 
-- Degree centrality of each node (bus)
-- Eigenvector centrality of each node (bus)
-- Betweenness centrality of each node (bus)
-- Closeness centrality of each node (bus)
-- Clustering coefficient of each node (bus)
+- Degree centrality of each node
+- Eigenvector centrality of each node
+- Betweenness centrality of each node
+- Closeness centrality of each node
+- Clustering coefficient of each node
 - Self-admittance of each bus
-- Edge betweenness centrality for each edge (branch)
-- [Degree of node(i) * Degree of node(j)] for each edge (branch)
-- Total load shedding each branch causes in all scenarios
-- Total amount of times each branch contributed to a cascade
+- Edge betweenness centrality for each branch
+- Degree-product metrics for connected buses
+- Total load shedding caused by each branch
+- Total number of cascade contributions by each branch
 
-# Prerequisites:
-- Matlab R2020b or later (but may work with earlier versions)
-- Matpower 7.1 or later
-    https://matpower.org/, or https://github.com/MATPOWER/matpower
-- AC-CFM and its prerequisites
-    https://github.com/mnoebels/AC-CFM, Reference: Noebels, M.,
-    Preece, R., Panteli, M. "AC Cascading Failure Model for
-    Resilience Analysis in Power Networks." IEEE Systems Journal (2020).
-- Brain Connectivity Toolbox (BCT)
-    https://sites.google.com/site/bctnet/home, Reference: Rubinov M,
-    Sporns O, "Complex network measures of brain connectivity:
-    Uses and interpretations", (2010) NeuroImage 52:1059-69.
+Original MATLAB prerequisites:
 
-# Usage
-```
-ntrm('MATPOWER case file name', [sample size])
+- MATLAB R2020b or later
+- MATPOWER 7.1 or later: <https://matpower.org/>
+- AC-CFM: <https://github.com/mnoebels/AC-CFM>
+- Brain Connectivity Toolbox: <https://sites.google.com/site/bctnet/home>
+
+MATLAB usage:
+
+```matlab
+results = ntrm('case39', 500)
 ```
 
-e.g.  results = ntrm('case39', 500)
+## Acknowledgements
 
-# Extension modules
-
-The [`cascade_ml`](cascade_ml/) directory contains a tested Python DC
-power-flow surrogate, reproducible contingency generator, feature pipeline, and
-baseline machine-learning workflow. It is intended for preliminary research and
-validation against NTRM/AC-CFM, not as an AC-CFM replacement.
-
-The [`agent_control`](agent_control/) directory adds constrained flexible-load,
-battery, and generator agents with network-aware centralised and auction control
-experiments. Preventive intervention is reported separately from involuntary
-blackout loss.
-
-The [`data_pipeline`](data_pipeline/) directory ingests reproducible public NESO
-demand snapshots, maps them to bounded synthetic IEEE test-case conditions, and
-screens conditional contingencies. It is explicitly a research demonstrator,
-not a representation of the live GB network or operational advice.
-
-# Acknowledgements
-The authors would like to thank Mathaios Panteli for valuable discussions
-and support. This work was supported by the Engineering and Physical
-Sciences Research Council [EP/W034204/1]
+The authors would like to thank Mathaios Panteli for valuable discussions and
+support. This work was supported by the Engineering and Physical Sciences
+Research Council [EP/W034204/1].
