@@ -8,9 +8,12 @@ version = "0.1.0"
 description = "Public-data operating snapshots for the NTRM research demonstrator"
 requires-python = ">=3.10"
 dependencies = [
+  "ntrm-cascade-ml",
+  "ntrm-agent-control",
   "joblib>=1.3",
   "pandas>=2.1",
   "requests>=2.31",
+  "urllib3>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -24,3 +27,7 @@ include = ["data_pipeline*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[project.scripts]
+ntrm-assess = "data_pipeline.scripts.assess_snapshot:main"
+ntrm-fetch = "data_pipeline.scripts.fetch_snapshot:main"

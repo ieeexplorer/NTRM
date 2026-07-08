@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Network-aware distributed resource control experiments for NTRM"
 requires-python = ">=3.10"
 dependencies = [
+  "ntrm-cascade-ml",
   "joblib>=1.3",
   "pandas>=2.1",
 ]
@@ -23,3 +24,7 @@ include = ["agent_control*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[project.scripts]
+ntrm-experiments = "agent_control.scripts.run_experiments:main"
+ntrm-sensitivity = "agent_control.scripts.run_sensitivity:main"

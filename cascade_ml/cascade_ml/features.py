@@ -30,6 +30,8 @@ FEATURE_NAMES: tuple[str, ...] = (
     "initial_unserved_fraction",
 )
 
+__all__ = ["FEATURE_VERSION", "FEATURE_NAMES", "extract_features"]
+
 
 def _feature_dict(case: PowerCase, initial_outages: tuple[int, ...]) -> dict[str, float]:
     active = set(case.branch_ids) - set(initial_outages)
@@ -67,9 +69,23 @@ def _feature_dict(case: PowerCase, initial_outages: tuple[int, ...]) -> dict[str
 def _algebraic_connectivity(graph: nx.Graph) -> float:
     if len(graph) < 2 or not nx.is_connected(graph):
         return 0.0
-    laplacian = nx.laplacian_matrix(graph).toarray().astype(float)
-    eigenvalues = np.linalg.eigvalsh(laplacian)
-    return float(max(eigenvalues[1], 0.0))
+    if len(graph) <= 50:
+        # Small graph: dense eigenvalue decomposition is fine
+        laplacian = nx.laplacian_matrix(graph).toarray().astype(float)
+        eigenvalues = np.linalg.eigvalsh(laplacian)
+        return float(max(eigenvalues[1], 0.0))
+    # Large graph: sparse eigensolver for the Fiedler value only
+    from scipy.sparse.linalg import eigsh
+
+    laplacian = nx.laplacian_matrix(graph).astype(float)
+    try:
+        eigenvalues = eigsh(laplacian, k=2, which="SM", return_eigenvectors=False)
+        return float(max(eigenvalues[1], 0.0))
+    except (np.linalg.LinAlgError, ValueError):
+        # Fallback to dense for degenerate cases
+        dense = laplacian.toarray()
+        vals = np.linalg.eigvalsh(dense)
+        return float(max(vals[1], 0.0))
 
 
 def extract_features(case: PowerCase, initial_outages: tuple[int, ...]) -> dict[str, float]:

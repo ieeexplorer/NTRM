@@ -41,7 +41,7 @@ def map_snapshot_to_case(
     config = config or MappingConfig()
     raw_scale = snapshot.national_demand_mw / config.reference_demand_mw
     applied_scale = min(max(raw_scale, config.minimum_scale), config.maximum_scale)
-    clamped = applied_scale != raw_scale
+    clamped = abs(applied_scale - raw_scale) > 1e-12
     warnings = [
         "aggregate_GB_data_mapped_to_synthetic_test_case",
         "model_operating_range_requires_validation",

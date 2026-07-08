@@ -49,73 +49,80 @@ class NesoDemandConnector:
         self.session = session or _retrying_session()
 
     def fetch_latest_actual(self, *, retrieved_at: datetime | None = None) -> OperatingSnapshot:
-        package_url = f"{self.api_root}/package_show?id={self.package_id}"
-        package_response = self.session.get(package_url, timeout=self.timeout_seconds)
-        package_response.raise_for_status()
-        package_payload = package_response.json()
-        if not package_payload.get("success"):
-            raise ValueError("NESO package lookup did not succeed")
-        package = package_payload["result"]
-        resources = [
-            resource
-            for resource in package.get("resources", [])
-            if str(resource.get("format", "")).upper() == "CSV"
-        ]
-        if not resources:
-            raise ValueError("NESO package contains no CSV resource")
-        if len(resources) > 1:
-            LOGGER.warning(
-                "NESO package has %d CSV resources; selecting the first (%s)",
-                len(resources),
-                resources[0].get("name", resources[0]["id"]),
+        try:
+            package_url = f"{self.api_root}/package_show?id={self.package_id}"
+            package_response = self.session.get(package_url, timeout=self.timeout_seconds)
+            package_response.raise_for_status()
+            try:
+                package_payload = package_response.json()
+            except (ValueError, KeyError) as exc:
+                raise ValueError(f"Invalid JSON response from NESO API: {exc}") from exc
+            if not package_payload.get("success"):
+                raise ValueError("NESO package lookup did not succeed")
+            package = package_payload["result"]
+            resources = [
+                resource
+                for resource in package.get("resources", [])
+                if str(resource.get("format", "")).upper() == "CSV"
+            ]
+            if not resources:
+                raise ValueError("NESO package contains no CSV resource")
+            if len(resources) > 1:
+                LOGGER.warning(
+                    "NESO package has %d CSV resources; selecting the first (%s)",
+                    len(resources),
+                    resources[0].get("name", resources[0]["id"]),
+                )
+            resource = resources[0]
+            csv_response = self.session.get(resource["url"], timeout=self.timeout_seconds)
+            csv_response.raise_for_status()
+            rows = list(csv.DictReader(StringIO(csv_response.text.lstrip("\ufeff"))))
+            actual_rows = [
+                row for row in rows if row.get("FORECAST_ACTUAL_INDICATOR", "").upper() == "A"
+            ]
+            if not actual_rows:
+                raise ValueError("NESO dataset contains no actual demand records")
+            valid_actual_rows = [row for row in actual_rows if _positive_demand(row)]
+            if not valid_actual_rows:
+                raise ValueError("NESO dataset contains no valid positive-demand actual records")
+            row = max(valid_actual_rows, key=_settlement_key)
+            retrieved = retrieved_at or utc_now()
+            observed = _settlement_start_utc(row["SETTLEMENT_DATE"], int(row["SETTLEMENT_PERIOD"]))
+            flags = list(
+                assess_quality(
+                    retrieved_at=retrieved,
+                    observed_at=observed,
+                    actual_or_forecast=row["FORECAST_ACTUAL_INDICATOR"],
+                    maximum_age_hours=self.maximum_age_hours,
+                )
             )
-        resource = resources[0]
-        csv_response = self.session.get(resource["url"], timeout=self.timeout_seconds)
-        csv_response.raise_for_status()
-        rows = list(csv.DictReader(StringIO(csv_response.text.lstrip("\ufeff"))))
-        actual_rows = [
-            row for row in rows if row.get("FORECAST_ACTUAL_INDICATOR", "").upper() == "A"
-        ]
-        if not actual_rows:
-            raise ValueError("NESO dataset contains no actual demand records")
-        valid_actual_rows = [row for row in actual_rows if _positive_demand(row)]
-        if not valid_actual_rows:
-            raise ValueError("NESO dataset contains no valid positive-demand actual records")
-        row = max(valid_actual_rows, key=_settlement_key)
-        retrieved = retrieved_at or utc_now()
-        observed = _settlement_start_utc(row["SETTLEMENT_DATE"], int(row["SETTLEMENT_PERIOD"]))
-        flags = list(
-            assess_quality(
+            invalid_count = len(actual_rows) - len(valid_actual_rows)
+            if invalid_count > 0:
+                flags.append("invalid_newer_records_skipped")
+            return OperatingSnapshot(
+                source="NESO Data Portal",
+                dataset=package.get("title", self.package_id),
+                resource_id=resource["id"],
+                source_url=resource["url"],
+                dataset_modified_at=package.get("metadata_modified"),
                 retrieved_at=retrieved,
                 observed_at=observed,
+                settlement_date=row["SETTLEMENT_DATE"],
+                settlement_period=int(row["SETTLEMENT_PERIOD"]),
                 actual_or_forecast=row["FORECAST_ACTUAL_INDICATOR"],
-                maximum_age_hours=self.maximum_age_hours,
+                national_demand_mw=_required_float(row, "ND"),
+                transmission_demand_mw=_optional_float(row, "TSD"),
+                embedded_wind_mw=_optional_float(row, "EMBEDDED_WIND_GENERATION"),
+                embedded_solar_mw=_optional_float(row, "EMBEDDED_SOLAR_GENERATION"),
+                interconnector_flows_mw={
+                    field: value
+                    for field in INTERCONNECTOR_FIELDS
+                    if (value := _optional_float(row, field)) is not None
+                },
+                quality_flags=tuple(flags),
             )
-        )
-        if _settlement_key(max(actual_rows, key=_settlement_key)) > _settlement_key(row):
-            flags.append("invalid_newer_records_skipped")
-        return OperatingSnapshot(
-            source="NESO Data Portal",
-            dataset=package.get("title", self.package_id),
-            resource_id=resource["id"],
-            source_url=resource["url"],
-            dataset_modified_at=package.get("metadata_modified"),
-            retrieved_at=retrieved,
-            observed_at=observed,
-            settlement_date=row["SETTLEMENT_DATE"],
-            settlement_period=int(row["SETTLEMENT_PERIOD"]),
-            actual_or_forecast=row["FORECAST_ACTUAL_INDICATOR"],
-            national_demand_mw=_required_float(row, "ND"),
-            transmission_demand_mw=_optional_float(row, "TSD"),
-            embedded_wind_mw=_optional_float(row, "EMBEDDED_WIND_GENERATION"),
-            embedded_solar_mw=_optional_float(row, "EMBEDDED_SOLAR_GENERATION"),
-            interconnector_flows_mw={
-                field: value
-                for field in INTERCONNECTOR_FIELDS
-                if (value := _optional_float(row, field)) is not None
-            },
-            quality_flags=tuple(flags),
-        )
+        except requests.RequestException as exc:
+            raise RuntimeError(f"NESO API request failed: {exc}") from exc
 
 
 def _retrying_session() -> requests.Session:
@@ -134,7 +141,10 @@ def _retrying_session() -> requests.Session:
 
 
 def _settlement_key(row: dict[str, str]) -> tuple[str, int]:
-    return row["SETTLEMENT_DATE"], int(row["SETTLEMENT_PERIOD"])
+    try:
+        return row["SETTLEMENT_DATE"], int(row["SETTLEMENT_PERIOD"])
+    except (KeyError, ValueError) as exc:
+        raise ValueError(f"Malformed settlement row: missing or invalid date/period") from exc
 
 
 def _settlement_start_utc(date_text: str, period: int) -> datetime:

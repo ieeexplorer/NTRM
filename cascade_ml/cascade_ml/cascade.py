@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from .model import PowerCase
 from .power_flow import PowerFlowResult, solve_dc_power_flow
 
+__all__ = ["CascadeStep", "CascadeResult", "simulate_cascade"]
+
 
 @dataclass(frozen=True)
 class CascadeStep:
@@ -46,6 +48,8 @@ def simulate_cascade(
     active = known - set(outages)
     history: list[CascadeStep] = []
 
+    # The loop always returns: either no overloaded branches (normal
+    # termination) or generation == max_generations (limit reached).
     for generation in range(max_generations + 1):
         power_flow = solve_dc_power_flow(case, active)
         overloaded = tuple(
@@ -81,5 +85,3 @@ def simulate_cascade(
             )
         )
         active.difference_update(overloaded)
-
-    raise RuntimeError("Cascade simulation reached max_generations without stabilising")

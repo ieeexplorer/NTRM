@@ -41,6 +41,9 @@ dashboard = ["streamlit>=1.35"]
 analysis = ["matplotlib>=3.8"]
 all = ["ntrm[dev,dashboard,analysis]"]
 
+[project.scripts]
+ntrm-demo = "run_demo:main"
+
 [tool.setuptools]
 packages = []  # root has no packages; sub-packages installed via requirements-dev.txt
 

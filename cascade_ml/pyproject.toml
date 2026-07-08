@@ -12,7 +12,7 @@ dependencies = [
   "networkx>=3.2",
   "numpy>=1.26",
   "pandas>=2.1",
-  "pypower>=5.1.19",
+  "pypower==5.1.19",
   "scikit-learn>=1.4",
 ]
 
@@ -26,3 +26,10 @@ include = ["cascade_ml*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[project.scripts]
+ntrm-generate = "cascade_ml.scripts.generate_dataset:main"
+ntrm-train = "cascade_ml.scripts.train_model:main"
+ntrm-predict = "cascade_ml.scripts.predict_risk:main"
+ntrm-metrics = "cascade_ml.scripts.print_metrics:main"
+ntrm-validate-ac = "cascade_ml.scripts.validate_vs_acfm:main"

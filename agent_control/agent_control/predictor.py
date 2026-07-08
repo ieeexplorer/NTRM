@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Protocol
 
 import joblib
 import pandas as pd
 
 from cascade_ml.features import extract_features
 from cascade_ml.model import PowerCase
+from cascade_ml.protocols import RiskPredictor  # noqa: F401 — re-export for backward compatibility
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,10 +43,6 @@ def _load_trusted_joblib(path: Path) -> dict:
     return bundle
 
 
-class RiskPredictor(Protocol):
-    def predict_probability(self, case: PowerCase, initial_outages: tuple[int, ...]) -> float: ...
-
-
 class ModelBundlePredictor:
     def __init__(self, model_path: str | Path) -> None:
         model_path = Path(model_path)
@@ -55,6 +51,16 @@ class ModelBundlePredictor:
         LOGGER.debug("Loading trusted model bundle from %s", model_path)
         self.bundle = _load_trusted_joblib(model_path)
         _validate_bundle(self.bundle, source=str(model_path))
+        from cascade_ml.features import FEATURE_VERSION
+
+        bundle_version = self.bundle.get("feature_version")
+        if bundle_version is not None and bundle_version != FEATURE_VERSION:
+            LOGGER.warning(
+                "Model bundle feature version %s differs from code version %s; "
+                "predictions may be unreliable",
+                bundle_version,
+                FEATURE_VERSION,
+            )
         self._classifier_name = "random_forest"
 
     def predict_probability(self, case: PowerCase, initial_outages: tuple[int, ...]) -> float:

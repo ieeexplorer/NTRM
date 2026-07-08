@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import joblib
 import numpy as np
@@ -28,6 +30,23 @@ from sklearn.metrics import (
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+
+from .features import FEATURE_VERSION
+
+__all__ = ["ModelBundle", "train_models", "save_model_bundle"]
+
+
+@dataclass(frozen=True)
+class ModelBundle:
+    """Typed container for a trained model bundle."""
+
+    feature_names: list[str]
+    classifiers: dict[str, Any]
+    regressors: dict[str, Any]
+    metrics: dict[str, Any]
+    feature_version: str
+    feature_importances: dict[str, float] | None = None
+
 
 NON_FEATURES = {
     "scenario_id",
@@ -184,6 +203,14 @@ def train_models(
             }
         )
 
+    if not fold_summaries:
+        raise ValueError(
+            f"No valid folds produced (n_splits={n_splits}). "
+            "Check that the dataset has enough groups and both severity classes."
+        )
+    train_rows = fold_summaries[-1]["train_rows"]
+    test_rows = fold_summaries[-1]["test_rows"]
+
     # Average metrics across folds
     classification_metrics = _average_fold_metrics(all_cls_metrics, n_splits)
     regression_metrics = _average_fold_metrics(all_reg_metrics, n_splits)
@@ -194,14 +221,15 @@ def train_models(
         avg_importances = np.array(all_importances).mean(axis=0).tolist()
 
     result: dict = {
+        "feature_version": FEATURE_VERSION,
         "feature_names": feature_names,
         "classifiers": last_classifiers or {},
         "regressors": last_regressors or {},
         "metrics": {
             "classification": classification_metrics,
             "regression": regression_metrics,
-            "train_rows": len(train_index),
-            "test_rows": len(test_index),
+            "train_rows": train_rows,
+            "test_rows": test_rows,
             "n_splits": n_splits,
             "classification_threshold": classification_threshold,
             "confusion_matrices": {
@@ -243,6 +271,23 @@ def save_model_bundle(bundle: dict, path: str | Path) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(bundle, destination)
+
+
+def to_model_bundle(bundle: dict) -> ModelBundle:
+    """Convert a legacy dict-based model bundle to a typed ``ModelBundle``.
+
+    This is a convenience helper for callers that want static type checking
+    over the dict returned by ``train_models``.
+    """
+    feature_importances = bundle.get("feature_importances")
+    return ModelBundle(
+        feature_names=bundle["feature_names"],
+        classifiers=bundle["classifiers"],
+        regressors=bundle["regressors"],
+        metrics=bundle["metrics"],
+        feature_version="1.0",
+        feature_importances=feature_importances if isinstance(feature_importances, dict) else None,
+    )
 
 
 def _safe_metric(function, y_true, y_pred) -> float | None:
