@@ -33,6 +33,11 @@ If the link returns 404, open the repository settings and set **Pages** to
 deploy from **GitHub Actions**, then run the **Deploy dashboard to GitHub
 Pages** workflow from the Actions tab.
 
+To verify the branch without installing anything, open the repository's
+**Actions** tab and check that the latest **CI** run is green. The CI workflow
+tests the Python modules and builds the dashboard static export used by GitHub
+Pages.
+
 ![NTRM dashboard overview](docs/images/dashboard-overview.png)
 
 ![NTRM IEEE 39-bus network view](docs/images/dashboard-network.png)
@@ -70,6 +75,22 @@ and prints the URL to open. By default it uses <http://127.0.0.1:3000>. If port
 
 No API key is required. The dashboard uses committed example data and works
 offline after dependencies are installed.
+
+Before opening a pull request, you can run the same dashboard build check
+locally:
+
+```powershell
+cd web_dashboard
+npm install
+$env:GITHUB_PAGES = "true"
+npm run build
+```
+
+```bash
+cd web_dashboard
+npm install
+GITHUB_PAGES=true npm run build
+```
 
 ## Python Research Demo
 
