@@ -29,6 +29,9 @@ upstream NTRM maintainers is tracked in
 Live demo, after the GitHub Pages workflow has run:
 <https://ieeexplorer.github.io/NTRM/>
 
+Demo video:
+[NTRM dashboard walkthrough](docs/videos/ntrm-dashboard-demo.mp4)
+
 If the link returns 404, open the repository settings and set **Pages** to
 deploy from **GitHub Actions**, then run the **Deploy dashboard to GitHub
 Pages** workflow from the Actions tab.
