@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useDashboardStore, type ActiveTab } from "@/store/dashboard";
 import { NetworkGraph } from "@/components/dashboard/network-graph";
 import { MetricCards, CascadePlayer, ContingencyTable, NetworkControls } from "@/components/dashboard/metric-cards";
@@ -25,6 +26,13 @@ const tabs: { value: ActiveTab; label: string; icon: React.ElementType }[] = [
 
 export default function DashboardPage() {
   const { activeTab, setActiveTab, mitigationEnabled, setMitigationEnabled, branches, selectedContingency } = useDashboardStore();
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab") as ActiveTab | null;
+    if (requestedTab && tabs.some(tab => tab.value === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [setActiveTab]);
 
   const trippedCount = branches.filter(b => b.status === "tripped").length;
 

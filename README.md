@@ -24,6 +24,19 @@ The technical roadmap is in
 upstream NTRM maintainers is tracked in
 [`sskazakos/NTRM#1`](https://github.com/sskazakos/NTRM/issues/1).
 
+## Dashboard Demo
+
+Live demo, after the GitHub Pages workflow has run:
+<https://ieeexplorer.github.io/NTRM/>
+
+If the link returns 404, open the repository settings and set **Pages** to
+deploy from **GitHub Actions**, then run the **Deploy dashboard to GitHub
+Pages** workflow from the Actions tab.
+
+![NTRM dashboard overview](docs/images/dashboard-overview.png)
+
+![NTRM IEEE 39-bus network view](docs/images/dashboard-network.png)
+
 ## Quick Start: Web Dashboard
 
 You need:

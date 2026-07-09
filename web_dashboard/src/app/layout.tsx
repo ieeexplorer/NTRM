@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
+const assetBasePath = process.env.GITHUB_PAGES === "true" ? "/NTRM" : "";
+
 export const metadata: Metadata = {
   title: "NTRM — Network Theory Resilience Metric Dashboard",
   description: "Interactive cascade prediction and mitigation control dashboard for the NTRM research prototype.",
   keywords: ["NTRM", "cascade prediction", "power systems", "resilience", "IEEE 39-bus", "machine learning"],
   authors: [{ name: "University of Sussex" }],
   icons: {
-    icon: "/logo.svg",
+    icon: `${assetBasePath}/logo.svg`,
   },
 };
 
