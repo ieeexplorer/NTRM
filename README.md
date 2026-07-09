@@ -13,6 +13,7 @@ agent-based mitigation, and public-data driven screening.
 
 | Module | What it does |
 |---|---|
+| [`web_dashboard`](web_dashboard/) | Main interactive NTRM dashboard with topology, cascade, ML-model, and mitigation views. |
 | [`cascade_ml`](cascade_ml/) | DC cascade surrogate, scenario generation, graph features, ML baselines, and an AC-CFM comparison protocol. |
 | [`agent_control`](agent_control/) | Flexible-load, battery, and generator agents with centralised, auction, and risk-gated control experiments. |
 | [`data_pipeline`](data_pipeline/) | Public NESO demand snapshots mapped to bounded synthetic IEEE 39-bus operating conditions. |
@@ -23,12 +24,13 @@ The technical roadmap is in
 upstream NTRM maintainers is tracked in
 [`sskazakos/NTRM#1`](https://github.com/sskazakos/NTRM/issues/1).
 
-## Quick Start
+## Quick Start: Web Dashboard
 
 You need:
 
 - Git
-- Python 3.10 or newer
+- Node.js 20 or newer with npm, from <https://nodejs.org/>
+- Python 3.10 or newer if you also want to run the research demo
 
 Clone this branch:
 
@@ -37,25 +39,45 @@ git clone -b research-cascade-prediction https://github.com/ieeexplorer/NTRM.git
 cd NTRM
 ```
 
-Run the setup script for your system:
+Start the dashboard:
+
+```powershell
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File run_dashboard.ps1
+```
 
 ```bash
 # Linux / macOS
-bash setup.sh
+bash run_dashboard.sh
 ```
+
+The script installs dashboard dependencies on first run, starts the Next.js app,
+and prints the URL to open. By default it uses <http://127.0.0.1:3000>. If port
+3000 is busy, it automatically tries the next port.
+
+No API key is required. The dashboard uses committed example data and works
+offline after dependencies are installed.
+
+## Python Research Demo
+
+Run the setup script for your system:
 
 ```powershell
 # Windows PowerShell
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-The script will:
+```bash
+# Linux / macOS
+bash setup.sh
+```
+
+The setup script will:
 
 1. Create a local `.venv` virtual environment.
 2. Install the Python packages from `requirements-dev.txt`.
 3. Run the offline demo with the committed NESO example snapshot.
-
-No API key is required. The default demo works offline.
+4. Install dashboard dependencies too, if Node.js 20+ and npm are available.
 
 ## After Setup
 
@@ -92,10 +114,22 @@ python run_demo.py --model cascade_ml/models/cascade_models.joblib
 Without a model path, the demo intentionally does not invent an ML risk
 probability.
 
+Run the web dashboard any time with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File run_dashboard.ps1
+```
+
+```bash
+bash run_dashboard.sh
+```
+
 ## Common Tasks
 
 | Goal | Command |
 |---|---|
+| Run the web dashboard | `powershell -ExecutionPolicy Bypass -File run_dashboard.ps1` or `bash run_dashboard.sh` |
+| Run the web dashboard on a specific port | `.\run_dashboard.ps1 -Port 3001` or `bash run_dashboard.sh 3001` |
 | Run the offline demo | `python run_demo.py` |
 | Run the demo with live NESO data | `python run_demo.py --live` |
 | Run all tests | `python -m pytest cascade_ml/tests agent_control/tests data_pipeline/tests -v` |
@@ -112,9 +146,10 @@ make generate-and-train
 make sensitivity
 ```
 
-## Optional Dashboard
+## Legacy Streamlit Dashboard
 
-The Streamlit dashboard is optional. Install its extra dependency first:
+The older Streamlit dashboard is still available for the public-data pipeline,
+but the main UI is [`web_dashboard`](web_dashboard/).
 
 ```bash
 python -m pip install -e "data_pipeline[dashboard]"
@@ -137,6 +172,14 @@ Windows PowerShell activation command:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
+```
+
+Manual dashboard setup:
+
+```bash
+cd web_dashboard
+npm install
+npm run dev -- --hostname 127.0.0.1 --port 3000
 ```
 
 ## Outputs And Generated Files
@@ -169,6 +212,24 @@ Install Python 3.10 or newer from <https://www.python.org/downloads/>. On
 Windows, tick **Add Python to PATH** during installation, then reopen your
 terminal.
 
+### `node` or `npm` is not found
+
+Install the current Node.js LTS release from <https://nodejs.org/>, then reopen
+your terminal. The web dashboard needs Node.js 20 or newer.
+
+### `localhost:3000` is already in use
+
+The launcher automatically tries the next free port and prints the URL. To pick
+a port yourself, run:
+
+```powershell
+.\run_dashboard.ps1 -Port 3001
+```
+
+```bash
+bash run_dashboard.sh 3001
+```
+
 ### PowerShell blocks `setup.ps1`
 
 Run:
@@ -192,7 +253,7 @@ shortcut layer.
 
 ### `streamlit` is not found
 
-Install the optional dashboard dependency:
+Install the optional legacy Streamlit dependency:
 
 ```bash
 python -m pip install -e "data_pipeline[dashboard]"

@@ -37,6 +37,20 @@ echo "Installing NTRM development dependencies"
 echo "Running offline demo"
 "$venv_python" run_demo.py
 
+if [ -d "web_dashboard" ]; then
+  if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+    node_major="$(node -p "process.versions.node.split('.')[0]")"
+    if [ "$node_major" -ge 20 ]; then
+      echo "Installing dashboard dependencies"
+      (cd web_dashboard && npm install)
+    else
+      echo "Skipping dashboard dependency install because Node.js 20 or newer is required. Current version: $(node --version)" >&2
+    fi
+  else
+    echo "Skipping dashboard dependency install because Node.js/npm was not found. Install Node.js 20+ from https://nodejs.org/ to run the web dashboard." >&2
+  fi
+fi
+
 cat <<'MSG'
 
 Setup complete.
@@ -44,6 +58,9 @@ Setup complete.
 Next time, activate the environment with:
   source .venv/bin/activate
 
-Then run:
+Run the Python demo with:
   python run_demo.py
+
+Run the web dashboard with:
+  bash run_dashboard.sh
 MSG
